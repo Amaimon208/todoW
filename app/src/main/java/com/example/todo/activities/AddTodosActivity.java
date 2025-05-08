@@ -1,4 +1,4 @@
-package com.example.todo;
+package com.example.todo.activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -24,6 +24,9 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.todo.R;
+import com.example.todo.Todo;
+import com.example.todo.TodoAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;

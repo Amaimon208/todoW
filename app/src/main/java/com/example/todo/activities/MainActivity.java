@@ -1,6 +1,6 @@
-package com.example.todo;
+package com.example.todo.activities;
 
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,6 +14,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.todo.Directory;
+import com.example.todo.DirectoryAdapter;
+import com.example.todo.R;
+import com.example.todo.activities.Login.LoginActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -27,45 +31,48 @@ import java.util.Map;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
-    private ArrayList<Directory> directories;
     private DirectoryAdapter directoryAdapter;
 
     private FirebaseAuth mAuth;
     private DatabaseReference databaseRef;
     private String currentUserId;
 
+    private ArrayList<Directory> directoryList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mAuth = FirebaseAuth.getInstance();
+        directoryList = new ArrayList<>();
+        directoryAdapter = new DirectoryAdapter(directoryList, this);
 
+        initializeViews();
+
+        mAuth = FirebaseAuth.getInstance();
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
         databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
-
         if (mAuth.getCurrentUser() != null) {
             currentUserId = mAuth.getCurrentUser().getUid();
         } else {
             currentUserId = "anonymous";
         }
+        fetchDirectories();
 
-        directories = new ArrayList<>();
-        initializeViews();
-        fetchDirectories(); // 🔥 załaduj katalogi od razu przy uruchomieniu
+
     }
 
     private void initializeViews() {
         RecyclerView recyclerView = findViewById(R.id.directoriesRecyclerView);
         Button addDirectoryButton = findViewById(R.id.addDirectoryButton);
 
-        directoryAdapter = new DirectoryAdapter(directories, this);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(directoryAdapter);
 
         addDirectoryButton.setOnClickListener(v -> showAddDirectoryDialog());
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private void showAddDirectoryDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.new_directory);
@@ -85,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
+
     private void saveDirectoryToFirebase(String directoryName) {
         String id = UUID.randomUUID().toString();
         Map<String, Object> directoryData = new HashMap<>();
@@ -102,31 +110,20 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void deleteDirectoryFromFirebase(String directoryId) {
-        databaseRef.child(currentUserId).child("directories").child(directoryId).removeValue()
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Directory deleted!", Toast.LENGTH_SHORT).show();
-                    fetchDirectories(); // 🔥 odśwież listę
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to delete directory.", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                });
-    }
-
-    private void fetchDirectories() {
+private void fetchDirectories() {
+    if (databaseRef != null && currentUserId != null) {
         databaseRef.child(currentUserId).child("directories").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                directories.clear();
+                directoryList.clear();
                 for (DataSnapshot directorySnapshot : snapshot.getChildren()) {
                     String id = directorySnapshot.child("id").getValue(String.class);
                     String name = directorySnapshot.child("name").getValue(String.class);
                     if (id != null && name != null) {
-                        directories.add(new Directory(id, name));
+                        directoryList.add(new Directory(id, name));
                     }
                 }
-                directoryAdapter.notifyDataSetChanged(); // 🔥 odśwież widok
+                directoryAdapter.notifyDataSetChanged(); // Update the UI
             }
 
             @Override
@@ -134,16 +131,10 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Failed to load directories.", Toast.LENGTH_SHORT).show();
             }
         });
+    } else {
+        Toast.makeText(this, "Database reference or user ID " + currentUserId, Toast.LENGTH_SHORT).show();
     }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Intent resultIntent = new Intent();
-        resultIntent.putParcelableArrayListExtra("directories", directories);
-        setResult(Activity.RESULT_OK, resultIntent);
-        finish();
-    }
+}
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
