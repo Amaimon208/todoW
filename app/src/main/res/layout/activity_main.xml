@@ -6,6 +6,8 @@
     android:padding="16dp"
     android:layout_marginTop="?attr/actionBarSize">
 
+<!--    <include layout="@layout/tool_bar" />-->
+
     <Button
         android:id="@+id/addDirectoryButton"
         android:layout_width="wrap_content"

@@ -11,9 +11,11 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.todo.BaseActivity;
 import com.example.todo.Directory;
 import com.example.todo.DirectoryAdapter;
 import com.example.todo.R;
@@ -30,19 +32,29 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
+//    BaseActivity
     private DirectoryAdapter directoryAdapter;
-
     private FirebaseAuth mAuth;
     private DatabaseReference databaseRef;
     private String currentUserId;
-
     private ArrayList<Directory> directoryList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+//        setContentView(R.layout.activity_main);
+//        getLayoutInflater().inflate(R.layout.activity_main, findViewById(R.id.content_frame));
         setContentView(R.layout.activity_main);
+
+//        Toolbar toolbar = findViewById(R.id.tool_bar);
+//        setSupportActionBar(toolbar);
+
+        // Setup toolbar once here
+//        Toolbar toolbar = findViewById(R.id.tool_bar);
+//        setSupportActionBar(toolbar);
+
 
         directoryList = new ArrayList<>();
         directoryAdapter = new DirectoryAdapter(directoryList, this);
@@ -58,8 +70,6 @@ public class MainActivity extends AppCompatActivity {
             currentUserId = "anonymous";
         }
         fetchDirectories();
-
-
     }
 
     private void initializeViews() {
@@ -88,10 +98,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
-
         builder.show();
     }
-
 
     private void saveDirectoryToFirebase(String directoryName) {
         String id = UUID.randomUUID().toString();
@@ -135,29 +143,4 @@ private void fetchDirectories() {
         Toast.makeText(this, "Database reference or user ID " + currentUserId, Toast.LENGTH_SHORT).show();
     }
 }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_add_todo, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_logout) {
-            logoutUser();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void logoutUser() {
-        mAuth.signOut();
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
-    }
 }

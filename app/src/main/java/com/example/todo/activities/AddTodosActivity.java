@@ -17,13 +17,13 @@ import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.todo.BaseActivity;
 import com.example.todo.R;
 import com.example.todo.Todo;
 import com.example.todo.TodoAdapter;
@@ -39,7 +39,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class AddTodosActivity extends AppCompatActivity {
+public class AddTodosActivity extends BaseActivity {
     private TodoAdapter todoAdapter;
     private SharedPreferences sharedPreferences;
     private static final int DIRECTORY_MANAGEMENT_REQUEST = 1;
