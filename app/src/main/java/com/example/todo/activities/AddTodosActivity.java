@@ -9,15 +9,16 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.todo.BaseActivity;
 import com.example.todo.R;
@@ -28,7 +29,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 import java.util.UUID;
 
 public class AddTodosActivity extends BaseActivity {
@@ -36,17 +36,18 @@ public class AddTodosActivity extends BaseActivity {
     private static final int DIRECTORY_MANAGEMENT_REQUEST = 1;
     private static final int REQUEST_IMAGE_CAPTURE = 3;
     private static final int REQUEST_CAMERA_PERMISSION = 100;
+
     private FirebaseAuth mAuth;
     private DatabaseReference databaseRef;
     private DatabaseReference todosRef;
+
     private String directoryId;
     private String directoryName;
     private String currentUserId;
-    private final ArrayList<Todo> allNotes = new ArrayList<>();
-
     private EditText inputTodo;
-
     private Bitmap capturedImage = null;
+    private ImageView todoImageView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,17 +57,14 @@ public class AddTodosActivity extends BaseActivity {
 
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
         databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_todo);
         setupCameraButton();
+        setupDeletePictureButton();
 
         mAuth = FirebaseAuth.getInstance();
-
-        if (mAuth.getCurrentUser() != null) {
-            currentUserId = mAuth.getCurrentUser().getUid();
-        } else {
-            currentUserId = "anonymous";
-        }
+        currentUserId = (mAuth.getCurrentUser() != null) ? mAuth.getCurrentUser().getUid() : "anonymous";
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -75,7 +73,6 @@ public class AddTodosActivity extends BaseActivity {
 
         sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE);
         boolean isNightMode = sharedPreferences.getBoolean("night_mode", false);
-
         AppCompatDelegate.setDefaultNightMode(
                 isNightMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
         );
@@ -86,9 +83,10 @@ public class AddTodosActivity extends BaseActivity {
     }
 
     private void initializeViews() {
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
         inputTodo = findViewById(R.id.inputTodo);
+        todoImageView = findViewById(R.id.todoImage);
         Button addButton = findViewById(R.id.addButton);
+        todoImageView.setVisibility(View.GONE);
 
         addButton.setOnClickListener(v -> {
             String todoText = inputTodo.getText().toString().trim();
@@ -113,7 +111,6 @@ public class AddTodosActivity extends BaseActivity {
             todo = new Todo(todoId, todoText, encodedImage); // Save the Base64 encoded image
         }
 
-        // Save the Todo object to Firebase
         todosRef.child(todoId)
                 .setValue(todo)
                 .addOnSuccessListener(aVoid -> {
@@ -124,6 +121,7 @@ public class AddTodosActivity extends BaseActivity {
                     Toast.makeText(this, "Failed to save todo.", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 });
+        finish();
     }
 
     private String encodeImage(Bitmap bitmap) {
@@ -154,6 +152,8 @@ public class AddTodosActivity extends BaseActivity {
                 Bitmap imageBitmap = (Bitmap) extras.get("data");
                 if (imageBitmap != null) {
                     capturedImage = imageBitmap;
+                    todoImageView.setImageBitmap(capturedImage);
+                    todoImageView.setVisibility(View.VISIBLE);
                     Toast.makeText(this, "Image captured.", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -186,16 +186,22 @@ public class AddTodosActivity extends BaseActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
+    private void setupDeletePictureButton() {
+        FloatingActionButton deleteButton = findViewById(R.id.deletePictureButton);
+        ImageView todoImage = findViewById(R.id.todoImage);
+
+        deleteButton.setOnClickListener(v -> {
+            capturedImage = null; // Clear the image from memory
+            todoImage.setVisibility(View.GONE); // Hide the ImageView
+            todoImage.setImageDrawable(null); // Optionally clear the drawable
+            Toast.makeText(this, "Image removed.", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
+            finish();
             return true;
         }
         return super.onOptionsItemSelected(item);
