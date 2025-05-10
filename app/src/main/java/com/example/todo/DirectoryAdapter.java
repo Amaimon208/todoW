@@ -15,7 +15,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.todo.activities.AddTodosActivity;
 import com.example.todo.activities.TodosActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
@@ -70,7 +69,7 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.Dire
         });
 
         holder.editButton.setOnClickListener(v -> showEditDialog(directory, position));
-        holder.deleteButton.setOnClickListener(v -> showDeleteDialog(position,  directory.getId()));
+        holder.deleteButton.setOnClickListener(v -> showDeleteDialog(position, directory.getId()));
     }
 
     @Override
@@ -78,83 +77,99 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.Dire
         return directories.size();
     }
 
-private void showEditDialog(Directory directory, int position) {
-    AlertDialog.Builder builder = new AlertDialog.Builder(context);
-    builder.setTitle(R.string.edit_directory);
+    private void showEditDialog(Directory directory, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.edit_directory);
 
-    final EditText input = new EditText(context);
-    input.setText(directory.getName());
-    builder.setView(input);
+        final EditText input = new EditText(context);
+        input.setText(directory.getName());
+        builder.setView(input);
 
-    builder.setPositiveButton(R.string.ok, (dialog, which) -> {
-        String newName = input.getText().toString().trim();
-        if (!newName.isEmpty()) {
-            // Get the directory ID to update it in Firebase
-            String directoryId = directory.getId();
+        builder.setPositiveButton(R.string.ok, (dialog, which) -> {
+            String newName = input.getText().toString().trim();
+            if (!newName.isEmpty()) {
+                String directoryId = directory.getId();
+                databaseRef
+                        .child(currentUserId)
+                        .child("directories")
+                        .child(directoryId)
+                        .child("name")
+                        .setValue(newName)
+                        .addOnSuccessListener(aVoid -> {
+                            directory.setName(newName);
 
-            // Update the directory name in Firebase
+                            notifyItemChanged(position);
+
+                            Toast.makeText(context, "Directory updated!", Toast.LENGTH_SHORT).show();
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(context, "Failed to update directory.", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        });
+            } else {
+                Toast.makeText(context, "Name cannot be empty.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void showDeleteDialog(int position, String directoryId) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(R.string.delete_directory);
+        builder.setMessage(R.string.delete_directory_hint);
+
+        builder.setPositiveButton(R.string.yes, (dialog, which) -> {
             databaseRef
                     .child(currentUserId)
                     .child("directories")
                     .child(directoryId)
-                    .child("name")
-                    .setValue(newName)
+                    .removeValue()
                     .addOnSuccessListener(aVoid -> {
-                        // If Firebase update is successful, update the local directory object
-                        directory.setName(newName);
-
-                        // Notify the adapter that the data has changed
-                        notifyItemChanged(position);
-
-                        // Show a success message
-                        Toast.makeText(context, "Directory updated!", Toast.LENGTH_SHORT).show();
+                        directories.remove(position);
+                        notifyItemRemoved(position);
+                        Toast.makeText(context, "Directory deleted!", Toast.LENGTH_SHORT).show();
                     })
                     .addOnFailureListener(e -> {
-                        // Handle failure
-                        Toast.makeText(context, "Failed to update directory.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Failed to delete directory.", Toast.LENGTH_SHORT).show();
                         e.printStackTrace();
                     });
-        } else {
-            Toast.makeText(context, "Name cannot be empty.", Toast.LENGTH_SHORT).show();
-        }
-    });
+        });
 
-    builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
+        builder.setNegativeButton(R.string.no, (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
 
-    builder.show();
-}
-
-private void showDeleteDialog(int position, String directoryId) {
-    AlertDialog.Builder builder = new AlertDialog.Builder(context);
-    builder.setTitle(R.string.delete_directory);
-    builder.setMessage(R.string.delete_directory_hint);
-
-    builder.setPositiveButton(R.string.yes, (dialog, which) -> {
-        // Get a reference to the Firebase database
-        DatabaseReference databaseRef = FirebaseDatabase.getInstance("https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app")
-                .getReference("users");
-
-        // Delete the directory from Firebase
-        databaseRef.child(currentUserId).child("directories").child(directoryId)
-                .removeValue()
-                .addOnSuccessListener(aVoid -> {
-                    // After successful deletion, remove the directory from the list
-                    directories.remove(position);  // Remove directory from the local list
-                    notifyItemRemoved(position);   // Notify the adapter that the item is removed
-
-                    // Show a toast to indicate that the directory was deleted
-                    Toast.makeText(context, "Directory deleted!", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    // If there's an error, show a failure message
-                    Toast.makeText(context, "Failed to delete directory.", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                });
-    });
-
-    builder.setNegativeButton(R.string.no, (dialog, which) -> dialog.cancel());
-    builder.show();
-}
+//    private void showDeleteDialog(int position, String directoryId) {
+//        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+//        builder.setTitle(R.string.delete_directory);
+//        builder.setMessage(R.string.delete_directory_hint);
+//
+//        builder.setPositiveButton(R.string.yes, (dialog, which) -> {
+//            databaseRef
+//                    .child(currentUserId)
+//                    .child("directories")
+//                    .child(directoryId)
+//                    .removeValue()
+//                    .addOnSuccessListener(aVoid -> {
+//                        if (position >= 0 && position < directories.size()) {
+//                            directories.remove(position);
+//                            notifyItemRemoved(position);
+//                            notifyItemRangeChanged(position, directories.size());
+//                        }
+//                        Toast.makeText(context, R.string.delete_directory, Toast.LENGTH_SHORT).show();
+//                    })
+//                    .addOnFailureListener(e -> {
+//                        Toast.makeText(context, R.string.delete_failed, Toast.LENGTH_SHORT).show();
+//                        e.printStackTrace();
+//                    });
+//        });
+//
+//        builder.setNegativeButton(R.string.no, (dialog, which) -> dialog.dismiss());
+//        builder.show();
+//    }
 
     static class DirectoryViewHolder extends RecyclerView.ViewHolder {
         TextView directoryName;

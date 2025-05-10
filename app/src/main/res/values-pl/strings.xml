@@ -54,4 +54,8 @@
     <string name="todo_image">Zdjęcie</string>
     <string name="delete_note">Usuń notatkę</string>
     <string name="delete_note_confirmation">Czy na pewno chcesz usunąć tę notatkę?</string>
+    <string name="delete_photo">Usuń zdjęcie</string>
+    <string name="delete_todo">Usuń notkę</string>
+    <string name="edit_todo">Edytuj notkę</string>
+    <string name="delete_failed">Usuwanie zakończone niepowodzeniem</string>
 </resources>

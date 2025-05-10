@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -25,8 +26,11 @@ import com.example.todo.R;
 import com.example.todo.Todo;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
 import java.util.UUID;
@@ -41,10 +45,11 @@ public class AddTodosActivity extends BaseActivity {
     private DatabaseReference databaseRef;
     private DatabaseReference todosRef;
 
-    private String directoryId;
-    private String directoryName;
     private String currentUserId;
+    private String directoryId;
+    private String todoID;
     private EditText inputTodo;
+
     private Bitmap capturedImage = null;
     private ImageView todoImageView;
 
@@ -53,7 +58,7 @@ public class AddTodosActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Intent intent = getIntent();
         directoryId = intent.getStringExtra("directoryId");
-        directoryName = intent.getStringExtra("directoryName");
+        todoID = intent.getStringExtra("todoID");
 
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
         databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
@@ -80,13 +85,40 @@ public class AddTodosActivity extends BaseActivity {
         todosRef = databaseRef.child(currentUserId).child("directories").child(directoryId).child("todos");
 
         initializeViews();
+
+        if(todoID != null){
+            setCurrentData();
+        }
+    }
+
+    private void setCurrentData() {
+        todosRef.child(todoID).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String name = snapshot.child("content").getValue(String.class);
+                inputTodo.setText(name);
+
+                String capturedImageBase64 = snapshot.child("image").getValue(String.class);
+                if (capturedImageBase64 != null && !capturedImageBase64.isEmpty()) {
+                    capturedImage = decodeImage(capturedImageBase64);
+                    todoImageView.setImageBitmap(capturedImage);
+                    todoImageView.setVisibility(View.VISIBLE);
+                } else {
+                    todoImageView.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getApplicationContext(), "Failed to load data", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void initializeViews() {
         inputTodo = findViewById(R.id.inputTodo);
         todoImageView = findViewById(R.id.todoImage);
         Button addButton = findViewById(R.id.addButton);
-        todoImageView.setVisibility(View.GONE);
 
         addButton.setOnClickListener(v -> {
             String todoText = inputTodo.getText().toString().trim();
@@ -99,19 +131,22 @@ public class AddTodosActivity extends BaseActivity {
     }
 
     private void saveTodoWithOptionalImage() {
-        String todoId = UUID.randomUUID().toString();
+        if(todoID == null){
+            todoID = UUID.randomUUID().toString();
+        }
+
         String todoText = inputTodo.getText().toString().trim();
         Todo todo;
 
         // Convert the Bitmap image to Base64 if it exists
         if (capturedImage == null) {
-            todo = new Todo(todoId, todoText); // No image, only text
+            todo = new Todo(todoID, todoText); // No image, only text
         } else {
             String encodedImage = encodeImage(capturedImage); // Encode the image as Base64 string
-            todo = new Todo(todoId, todoText, encodedImage); // Save the Base64 encoded image
+            todo = new Todo(todoID, todoText, encodedImage); // Save the Base64 encoded image
         }
 
-        todosRef.child(todoId)
+        todosRef.child(todoID)
                 .setValue(todo)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Todo saved successfully!", Toast.LENGTH_SHORT).show();
@@ -129,6 +164,11 @@ public class AddTodosActivity extends BaseActivity {
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream); // Compress to PNG format
         byte[] byteArray = byteArrayOutputStream.toByteArray();
         return Base64.encodeToString(byteArray, Base64.DEFAULT); // Encode to Base64
+    }
+
+    private Bitmap decodeImage(String encodedImage) {
+        byte[] decodedBytes = Base64.decode(encodedImage, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
     }
 
     @Override
