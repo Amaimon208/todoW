@@ -34,6 +34,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".activities.Login.RegisterActivity" />
+        <activity android:name=".activities.TodosActivity" />
         <activity android:name=".activities.AddTodosActivity" />
     </application>
 

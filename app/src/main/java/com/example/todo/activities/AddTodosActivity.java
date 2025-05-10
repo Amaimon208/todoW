@@ -1,7 +1,6 @@
 package com.example.todo.activities;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,10 +9,8 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -40,7 +37,6 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class AddTodosActivity extends BaseActivity {
-    private TodoAdapter todoAdapter;
     private SharedPreferences sharedPreferences;
     private static final int DIRECTORY_MANAGEMENT_REQUEST = 1;
     private static final int REQUEST_IMAGE_CAPTURE = 3;
@@ -62,7 +58,7 @@ public class AddTodosActivity extends BaseActivity {
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
         databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.add_todo);
+        setContentView(R.layout.activity_add_todo);
         setupCameraButton();
 
         mAuth = FirebaseAuth.getInstance();
@@ -87,37 +83,7 @@ public class AddTodosActivity extends BaseActivity {
 
         todosRef = databaseRef.child(currentUserId).child("directories").child(directoryId).child("todos");
 
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        todoAdapter = new TodoAdapter(allNotes, this, directoryId, currentUserId);
-        recyclerView.setAdapter(todoAdapter);
-
-        loadTodosFromFirebase();
         initializeViews();
-    }
-
-    private void loadTodosFromFirebase() {
-        todosRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                allNotes.clear();
-
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    Todo todo = snapshot.getValue(Todo.class);
-                    if (todo != null) {
-                        allNotes.add(todo);
-                    }
-                }
-
-                todoAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.e("AddTodosActivity", "Failed to load todos: " + databaseError.getMessage());
-                Toast.makeText(AddTodosActivity.this, "Failed to load todos.", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void initializeViews() {
@@ -131,6 +97,7 @@ public class AddTodosActivity extends BaseActivity {
                 saveTodoToFirebase(todoText);
                 inputTodo.setText("");
             }
+            onBackPressed();
         });
     }
 
@@ -239,17 +206,17 @@ public class AddTodosActivity extends BaseActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        finish();
     }
 }

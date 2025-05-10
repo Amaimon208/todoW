@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.todo.activities.AddTodosActivity;
+import com.example.todo.activities.TodosActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -60,7 +61,7 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.Dire
         holder.notesCount.setText(context.getString(R.string.notes_count, directory.getNotes().size()));
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, AddTodosActivity.class);
+            Intent intent = new Intent(context, TodosActivity.class);
             intent.putExtra("directoryPosition", position);
             intent.putExtra("directoryName", directory.getName());
             intent.putExtra("directoryId", directory.getId());

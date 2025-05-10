@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.UUID;
 
 public class MainActivity extends BaseActivity {
-//    BaseActivity
     private DirectoryAdapter directoryAdapter;
     private FirebaseAuth mAuth;
     private DatabaseReference databaseRef;
@@ -43,18 +42,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-//        setContentView(R.layout.activity_main);
-//        getLayoutInflater().inflate(R.layout.activity_main, findViewById(R.id.content_frame));
         setContentView(R.layout.activity_main);
-
-//        Toolbar toolbar = findViewById(R.id.tool_bar);
-//        setSupportActionBar(toolbar);
-
-        // Setup toolbar once here
-//        Toolbar toolbar = findViewById(R.id.tool_bar);
-//        setSupportActionBar(toolbar);
-
 
         directoryList = new ArrayList<>();
         directoryAdapter = new DirectoryAdapter(directoryList, this);
