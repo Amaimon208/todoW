@@ -47,21 +47,31 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
         Todo todo = todoList.get(position);
         holder.todoText.setVisibility(View.VISIBLE);  // Show the text view
         holder.todoText.setText(todo.getContent());  // Set the text content
+
         holder.itemView.setOnLongClickListener(v -> {
             if (todo.getImage() == null) {
-                goToEditActivity(position, todo);  // Show edit dialog if there's no image
+                goToEditActivity(holder.getAdapterPosition(), todo);
             } else {
-                showDeleteDialog(position, todo);  // Show delete dialog if there's an image
+                showDeleteDialog(todo, holder);
             }
             return true;
         });
+//        holder.itemView.setOnLongClickListener(v -> {
+//            if (todo.getImage() == null) {
+//                goToEditActivity(position, todo);  // Show edit dialog if there's no image
+//            } else {
+//                showDeleteDialog(position, todo);  // Show delete dialog if there's an image
+//            }
+//            return true;
+//        });
 
         databaseRef = FirebaseDatabase
                 .getInstance("https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app")
                 .getReference("users");
 
         holder.editButton.setOnClickListener(v -> goToEditActivity(todo, position));
-        holder.deleteButton.setOnClickListener(v -> showDeleteDialog(position,  todo));
+//        holder.deleteButton.setOnClickListener(v -> showDeleteDialog(position,  todo));
+        holder.deleteButton.setOnClickListener(v -> showDeleteDialog(todo, holder));
     }
 
     @Override
@@ -89,14 +99,29 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
         builder.show();
     }
 
-    private void showDeleteDialog(int position, Todo todo) {
+//    private void showDeleteDialog(int position, Todo todo) {
+//        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+//        builder.setTitle(R.string.delete_note);
+//        builder.setMessage(R.string.delete_note_confirmation);
+//
+//        builder.setPositiveButton(R.string.ok, (dialog, which) -> {
+//            deleteTodoFromFirebase(todo, position);  // Delete the todo item from Firebase
+//        });
+//        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
+//        builder.show();
+//    }
+
+    private void showDeleteDialog(Todo todo, RecyclerView.ViewHolder holder) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(R.string.delete_note);
         builder.setMessage(R.string.delete_note_confirmation);
 
         builder.setPositiveButton(R.string.ok, (dialog, which) -> {
-            deleteTodoFromFirebase(todo, position);  // Delete the todo item from Firebase
+            if (holder.getAdapterPosition() != RecyclerView.NO_POSITION) {
+                deleteFromDatabase(todo, holder);
+            }
         });
+
         builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.cancel());
         builder.show();
     }
@@ -113,21 +138,41 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
                 });
     }
 
-    private void deleteTodoFromFirebase(Todo todo, int position) {
-        deleteFromDatabase(todo, position);  // Call the method to remove the todo from the database
-    }
+    //delete with fixes
+    private void deleteFromDatabase(Todo todo, RecyclerView.ViewHolder holder) {
+        int position = holder.getAdapterPosition();
 
-    private void deleteFromDatabase(Todo todo, int position) {
-        String todoId = todo.getId();
         databaseRef.child(currentUserId)
                 .child("directories")
                 .child(directoryId)
                 .child("todos")
-                .child(todoId)
+                .child(todo.getId())
                 .removeValue()
                 .addOnSuccessListener(aVoid -> {
-                    todoList.remove(position);
-                    notifyItemRemoved(position);
+                    // super defensive check
+                    if (position != RecyclerView.NO_POSITION && position < todoList.size()) {
+                        if (todoList.get(position).getId().equals(todo.getId())) {
+                            todoList.remove(position);
+                            notifyItemRemoved(position);
+                        } else {
+                            for (int i = 0; i < todoList.size(); i++) {
+                                if (todoList.get(i).getId().equals(todo.getId())) {
+                                    todoList.remove(i);
+                                    notifyItemRemoved(i);
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        for (int i = 0; i < todoList.size(); i++) {
+                            if (todoList.get(i).getId().equals(todo.getId())) {
+                                todoList.remove(i);
+                                notifyItemRemoved(i);
+                                break;
+                            }
+                        }
+                    }
+
                     Toast.makeText(context, "Todo deleted successfully.", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
@@ -135,6 +180,8 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
                     e.printStackTrace();
                 });
     }
+
+
 
     private void goToEditActivity(Todo todo, int position) {
         Intent intent = new Intent(context, AddTodosActivity.class);

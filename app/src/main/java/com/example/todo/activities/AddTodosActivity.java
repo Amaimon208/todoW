@@ -44,15 +44,12 @@ public class AddTodosActivity extends BaseActivity {
     private FirebaseAuth mAuth;
     private DatabaseReference databaseRef;
     private DatabaseReference todosRef;
-
     private String currentUserId;
     private String directoryId;
     private String todoID;
     private EditText inputTodo;
-
     private Bitmap capturedImage = null;
     private ImageView todoImageView;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,9 +83,13 @@ public class AddTodosActivity extends BaseActivity {
 
         initializeViews();
 
-        if(todoID != null){
+        if(todoExist()){
             setCurrentData();
         }
+    }
+
+    private boolean todoExist() {
+        return todoID != null;
     }
 
     private void setCurrentData() {
@@ -119,6 +120,10 @@ public class AddTodosActivity extends BaseActivity {
         inputTodo = findViewById(R.id.inputTodo);
         todoImageView = findViewById(R.id.todoImage);
         Button addButton = findViewById(R.id.addButton);
+
+        if(todoExist()){
+            addButton.setText(R.string.edit);
+        }
 
         addButton.setOnClickListener(v -> {
             String todoText = inputTodo.getText().toString().trim();

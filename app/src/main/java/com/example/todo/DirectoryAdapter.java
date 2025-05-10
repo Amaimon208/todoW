@@ -142,35 +142,6 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.Dire
         builder.show();
     }
 
-//    private void showDeleteDialog(int position, String directoryId) {
-//        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-//        builder.setTitle(R.string.delete_directory);
-//        builder.setMessage(R.string.delete_directory_hint);
-//
-//        builder.setPositiveButton(R.string.yes, (dialog, which) -> {
-//            databaseRef
-//                    .child(currentUserId)
-//                    .child("directories")
-//                    .child(directoryId)
-//                    .removeValue()
-//                    .addOnSuccessListener(aVoid -> {
-//                        if (position >= 0 && position < directories.size()) {
-//                            directories.remove(position);
-//                            notifyItemRemoved(position);
-//                            notifyItemRangeChanged(position, directories.size());
-//                        }
-//                        Toast.makeText(context, R.string.delete_directory, Toast.LENGTH_SHORT).show();
-//                    })
-//                    .addOnFailureListener(e -> {
-//                        Toast.makeText(context, R.string.delete_failed, Toast.LENGTH_SHORT).show();
-//                        e.printStackTrace();
-//                    });
-//        });
-//
-//        builder.setNegativeButton(R.string.no, (dialog, which) -> dialog.dismiss());
-//        builder.show();
-//    }
-
     static class DirectoryViewHolder extends RecyclerView.ViewHolder {
         TextView directoryName;
         TextView notesCount;
