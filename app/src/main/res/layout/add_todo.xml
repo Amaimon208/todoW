@@ -45,21 +45,4 @@
         android:layout_weight="1"
         android:contentDescription="@string/directory_notes" />
 
-    <Switch
-        android:id="@+id/themeToggleBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:text="@string/dark_mode"
-        android:textColor="@color/black"
-        android:minHeight="48dp"
-        android:padding="12dp"
-        tools:ignore="UseSwitchCompatOrMaterialXml" />
-
 </LinearLayout>
-
-    <!--    <Button-->
-    <!--        android:id="@+id/manageDirButton"-->
-    <!--        android:layout_width="wrap_content"-->
-    <!--        android:layout_height="wrap_content"-->
-    <!--        android:layout_marginStart="8dp"-->
-    <!--        android:text="@string/manage_directories" />-->

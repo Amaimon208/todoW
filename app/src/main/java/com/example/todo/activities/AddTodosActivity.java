@@ -125,23 +125,6 @@ public class AddTodosActivity extends BaseActivity {
         EditText inputTodo = findViewById(R.id.inputTodo);
         Button addButton = findViewById(R.id.addButton);
 
-        @SuppressLint("UseSwitchCompatOrMaterialCode") Switch themeToggleBtn = findViewById(R.id.themeToggleBtn);
-        boolean isNightMode = sharedPreferences.getBoolean("night_mode", false);
-        themeToggleBtn.setText(isNightMode ? getString(R.string.light_mode) : getString(R.string.dark_mode));
-        themeToggleBtn.setChecked(isNightMode);
-        themeToggleBtn.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putBoolean("night_mode", isChecked);
-            editor.apply();
-            themeToggleBtn.setText(isChecked ? getString(R.string.light_mode) : getString(R.string.dark_mode));
-
-            AppCompatDelegate.setDefaultNightMode(
-                    isChecked ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
-            );
-
-            recreate();
-        });
-
         addButton.setOnClickListener(v -> {
             String todoText = inputTodo.getText().toString().trim();
             if (!todoText.isEmpty()) {
