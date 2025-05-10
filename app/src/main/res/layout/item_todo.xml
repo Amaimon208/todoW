@@ -12,12 +12,12 @@
         android:textSize="16sp"
         android:textColor="@android:color/black" />
 
-    <ImageView
-        android:id="@+id/todoImage"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:scaleType="centerCrop"
-        android:visibility="gone"
-        android:contentDescription="@string/todo_image" />
+<!--    <ImageView-->
+<!--        android:id="@+id/todoImage"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="200dp"-->
+<!--        android:scaleType="centerCrop"-->
+<!--        android:visibility="gone"-->
+<!--        android:contentDescription="@string/todo_image" />-->
 
 </LinearLayout>

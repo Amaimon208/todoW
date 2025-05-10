@@ -18,14 +18,6 @@
         android:importantForAutofill="no"
         android:inputType="text" />
 
-    <Button
-        android:id="@+id/addButton"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/add_todo"
-        android:minWidth="88dp" />
-
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/cameraButton"
         android:layout_width="wrap_content"
@@ -36,4 +28,11 @@
         android:src="@android:drawable/ic_menu_camera"
         android:minHeight="56dp" />
 
+    <Button
+        android:id="@+id/addButton"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/add_todo"
+        android:minWidth="88dp" />
 </LinearLayout>

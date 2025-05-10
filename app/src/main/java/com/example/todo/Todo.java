@@ -1,17 +1,24 @@
 package com.example.todo;
 
+import android.graphics.Bitmap;
+
 public class Todo {
     private String id;
-    private String type;
     private String content;
+    private String image;
 
-    public Todo() {
+    public Todo() {}
+
+    public Todo(String id, String content) {
+        this.id = id;
+        this.content = content;
     }
 
-    public Todo(String id, String type, String content) {
+
+    public Todo(String id, String content, String image) {
         this.id = id;
-        this.type = type;
         this.content = content;
+        this.image = image;
     }
 
     public String getId() {
@@ -22,19 +29,19 @@ public class Todo {
         this.id = id;
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
     public String getContent() {
         return content;
     }
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
     }
 }
