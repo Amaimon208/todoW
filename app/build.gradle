@@ -5,9 +5,17 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-Properties properties = new Properties()
-properties.load(project.rootProject.file("local.properties").newDataInputStream())
-def apiKey = properties.getProperty("API_KEY")
+//Properties properties = new Properties()
+//properties.load(project.rootProject.file("local.properties").newDataInputStream())
+//def apiKey = properties.getProperty("API_KEY")
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
+def mapsApiKey = localProperties['MAPS_API_KEY'] ?: ""
 
 android {
     namespace 'com.example.todo'
@@ -23,18 +31,18 @@ android {
 //        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 //        buildConfigField "String", "MAPS_API_KEY", "\"${MAPS_API_KEY}\""
 //        resValue "string", "maps_api_key", MAPS_API_KEY
-        manifestPlaceholders = [API_KEY: apiKey]
+        manifestPlaceholders = [API_KEY: mapsApiKey]
     }
 
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            manifestPlaceholders = [API_KEY: apiKey]
+            manifestPlaceholders = [API_KEY: mapsApiKey]
         }
 
         debug {
-            manifestPlaceholders = [API_KEY: apiKey]
+            manifestPlaceholders = [API_KEY: mapsApiKey]
         }
     }
     compileOptions {

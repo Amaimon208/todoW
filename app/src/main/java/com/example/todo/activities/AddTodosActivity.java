@@ -40,6 +40,7 @@ public class AddTodosActivity extends BaseActivity {
     private static final int DIRECTORY_MANAGEMENT_REQUEST = 1;
     private static final int REQUEST_IMAGE_CAPTURE = 3;
     private static final int REQUEST_CAMERA_PERMISSION = 100;
+    public static final int REQUEST_LOCATION = 1001;
 
     private FirebaseAuth mAuth;
     private DatabaseReference databaseRef;
@@ -82,6 +83,12 @@ public class AddTodosActivity extends BaseActivity {
                 isNightMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO
         );
 
+        Button locationButton = findViewById(R.id.btn_select_location);
+        locationButton.setOnClickListener(v -> {
+            Intent newIntent = new Intent(AddTodosActivity.this, LocationActivity.class);
+            startActivityForResult(newIntent, REQUEST_LOCATION);
+        });
+//        Intent intent = new Intent(this, AddTodosActivity.class);
         todosRef = databaseRef.child(currentUserId).child("directories").child(directoryId).child("todos");
 
         if(todoExist()){

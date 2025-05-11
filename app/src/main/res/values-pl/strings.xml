@@ -59,5 +59,6 @@
     <string name="edit_todo">Edytuj notkę</string>
     <string name="delete_failed">Usuwanie zakończone niepowodzeniem</string>
     <string name="edit">Edytuj</string>
-    <string name="todo_details">Szczeguły todo</string>
+    <string name="todo_details">Szczegóły todo</string>
+    <string name="set_location">Dodaj lokację</string>
 </resources>

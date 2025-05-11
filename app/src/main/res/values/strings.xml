@@ -60,4 +60,5 @@
     <string name="delete_failed">Deletion failed</string>
     <string name="edit">Edit</string>
     <string name="todo_details">Todo details</string>
+    <string name="set_location">Set Location</string>
 </resources>
