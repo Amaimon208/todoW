@@ -100,8 +100,8 @@ public class TodosActivity extends BaseActivity {
     }
 
     private void initializeViews() {
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
-        EditText inputTodo = findViewById(R.id.inputTodo);
+//        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+//        EditText inputTodo = findViewById(R.id.inputTodo);
         Button addButton = findViewById(R.id.addButton);
 
         addButton.setOnClickListener(v -> {

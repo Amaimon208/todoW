@@ -51,17 +51,20 @@ public class AddTodosActivity extends BaseActivity {
     private Bitmap capturedImage = null;
     private ImageView todoImageView;
 
+    private FloatingActionButton deleteButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         directoryId = intent.getStringExtra("directoryId");
         todoID = intent.getStringExtra("todoID");
 
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
         databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
-
-        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_todo);
+        initializeViews();
+
         setupCameraButton();
         setupDeletePictureButton();
 
@@ -81,11 +84,10 @@ public class AddTodosActivity extends BaseActivity {
 
         todosRef = databaseRef.child(currentUserId).child("directories").child(directoryId).child("todos");
 
-        initializeViews();
-
         if(todoExist()){
             setCurrentData();
         }
+        setPictureVisibility();
     }
 
     private boolean todoExist() {
@@ -96,17 +98,13 @@ public class AddTodosActivity extends BaseActivity {
         todosRef.child(todoID).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String name = snapshot.child("content").getValue(String.class);
-                inputTodo.setText(name);
-
+                String content = snapshot.child("content").getValue(String.class);
+                inputTodo.setText(content);
                 String capturedImageBase64 = snapshot.child("image").getValue(String.class);
                 if (capturedImageBase64 != null && !capturedImageBase64.isEmpty()) {
                     capturedImage = decodeImage(capturedImageBase64);
-                    todoImageView.setImageBitmap(capturedImage);
-                    todoImageView.setVisibility(View.VISIBLE);
-                } else {
-                    todoImageView.setVisibility(View.GONE);
                 }
+                setPictureVisibility();
             }
 
             @Override
@@ -116,9 +114,21 @@ public class AddTodosActivity extends BaseActivity {
         });
     }
 
+    private void setPictureVisibility() {
+        if (capturedImage == null) {
+            todoImageView.setVisibility(View.GONE);
+            deleteButton.setVisibility(View.GONE);
+        } else {
+            todoImageView.setImageBitmap(capturedImage);
+            todoImageView.setVisibility(View.VISIBLE);
+            deleteButton.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void initializeViews() {
         inputTodo = findViewById(R.id.inputTodo);
         todoImageView = findViewById(R.id.todoImage);
+        deleteButton = findViewById(R.id.deletePictureButton);
         Button addButton = findViewById(R.id.addButton);
 
         if(todoExist()){
@@ -155,7 +165,6 @@ public class AddTodosActivity extends BaseActivity {
                 .setValue(todo)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Todo saved successfully!", Toast.LENGTH_SHORT).show();
-                    capturedImage = null; // Clear the captured image after saving
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to save todo.", Toast.LENGTH_SHORT).show();
@@ -197,8 +206,7 @@ public class AddTodosActivity extends BaseActivity {
                 Bitmap imageBitmap = (Bitmap) extras.get("data");
                 if (imageBitmap != null) {
                     capturedImage = imageBitmap;
-                    todoImageView.setImageBitmap(capturedImage);
-                    todoImageView.setVisibility(View.VISIBLE);
+                    setPictureVisibility();
                     Toast.makeText(this, "Image captured.", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -232,14 +240,13 @@ public class AddTodosActivity extends BaseActivity {
     }
 
     private void setupDeletePictureButton() {
-        FloatingActionButton deleteButton = findViewById(R.id.deletePictureButton);
         ImageView todoImage = findViewById(R.id.todoImage);
 
         deleteButton.setOnClickListener(v -> {
             capturedImage = null; // Clear the image from memory
-            todoImage.setVisibility(View.GONE); // Hide the ImageView
             todoImage.setImageDrawable(null); // Optionally clear the drawable
             Toast.makeText(this, "Image removed.", Toast.LENGTH_SHORT).show();
+            setPictureVisibility();
         });
     }
 
