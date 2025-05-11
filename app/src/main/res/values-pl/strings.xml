@@ -59,4 +59,5 @@
     <string name="edit_todo">Edytuj notkę</string>
     <string name="delete_failed">Usuwanie zakończone niepowodzeniem</string>
     <string name="edit">Edytuj</string>
+    <string name="todo_details">Szczeguły todo</string>
 </resources>

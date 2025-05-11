@@ -59,4 +59,5 @@
     <string name="edit_todo">Edit todo</string>
     <string name="delete_failed">Deletion failed</string>
     <string name="edit">Edit</string>
+    <string name="todo_details">Todo details</string>
 </resources>
