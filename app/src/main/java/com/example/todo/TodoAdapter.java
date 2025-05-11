@@ -75,29 +75,6 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
         holder.deleteButton.setOnClickListener(v -> showDeleteDialog(todo, holder));
     }
 
-//    @Override
-//    public void onBindViewHolder(@NonNull TodoViewHolder holder, int position) {
-//        Todo todo = todoList.get(position);
-//        holder.todoText.setVisibility(View.VISIBLE);  // Show the text view
-//        holder.todoText.setText(todo.getContent());  // Set the text content
-//
-//        holder.itemView.setOnLongClickListener(v -> {
-//            if (todo.getImage() == null) {
-//                goToEditActivity(holder.getAdapterPosition(), todo);
-//            } else {
-//                showDeleteDialog(todo, holder);
-//            }
-//            return true;
-//        });
-//
-//        databaseRef = FirebaseDatabase
-//                .getInstance("https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app")
-//                .getReference("users");
-//
-//        holder.editButton.setOnClickListener(v -> goToEditActivity(todo, position));
-//        holder.deleteButton.setOnClickListener(v -> showDeleteDialog(todo, holder));
-//    }
-
     @Override
     public int getItemCount() {
         return todoList.size();
