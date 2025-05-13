@@ -61,4 +61,5 @@
     <string name="edit">Edytuj</string>
     <string name="todo_details">Szczegóły todo</string>
     <string name="set_location">Dodaj lokację</string>
+    <string name="search_localization">Wyszukaj lokalizację</string>
 </resources>
