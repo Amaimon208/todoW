@@ -47,7 +47,7 @@ public class AddTodosActivity extends BaseActivity {
     private DatabaseReference todosRef;
     private String currentUserId;
     private String directoryId;
-    private String todoID;
+    private String todoId;
     private EditText inputTodo;
     private Bitmap capturedImage = null;
     private ImageView todoImageView;
@@ -59,7 +59,7 @@ public class AddTodosActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         directoryId = intent.getStringExtra("directoryId");
-        todoID = intent.getStringExtra("todoID");
+        todoId = intent.getStringExtra("todoId");
 
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
         databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
@@ -86,8 +86,12 @@ public class AddTodosActivity extends BaseActivity {
         Button locationButton = findViewById(R.id.btn_select_location);
         locationButton.setOnClickListener(v -> {
             Intent newIntent = new Intent(AddTodosActivity.this, LocationActivity.class);
+            newIntent.putExtra("directoryId", directoryId);
+            newIntent.putExtra("todoId", todoId);
             startActivityForResult(newIntent, REQUEST_LOCATION);
         });
+
+
 //        Intent intent = new Intent(this, AddTodosActivity.class);
         todosRef = databaseRef.child(currentUserId).child("directories").child(directoryId).child("todos");
 
@@ -97,12 +101,13 @@ public class AddTodosActivity extends BaseActivity {
         setPictureVisibility();
     }
 
+
     private boolean todoExist() {
-        return todoID != null;
+        return todoId != null;
     }
 
     private void setCurrentData() {
-        todosRef.child(todoID).addListenerForSingleValueEvent(new ValueEventListener() {
+        todosRef.child(todoId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String content = snapshot.child("content").getValue(String.class);
@@ -153,8 +158,8 @@ public class AddTodosActivity extends BaseActivity {
     }
 
     private void saveTodoWithOptionalImage() {
-        if(todoID == null){
-            todoID = UUID.randomUUID().toString();
+        if(todoId == null){
+            todoId = UUID.randomUUID().toString();
         }
 
         String todoText = inputTodo.getText().toString().trim();
@@ -162,13 +167,13 @@ public class AddTodosActivity extends BaseActivity {
 
         // Convert the Bitmap image to Base64 if it exists
         if (capturedImage == null) {
-            todo = new Todo(todoID, todoText); // No image, only text
+            todo = new Todo(todoId, todoText); // No image, only text
         } else {
             String encodedImage = encodeImage(capturedImage); // Encode the image as Base64 string
-            todo = new Todo(todoID, todoText, encodedImage); // Save the Base64 encoded image
+            todo = new Todo(todoId, todoText, encodedImage); // Save the Base64 encoded image
         }
 
-        todosRef.child(todoID)
+        todosRef.child(todoId)
                 .setValue(todo)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Todo saved successfully!", Toast.LENGTH_SHORT).show();

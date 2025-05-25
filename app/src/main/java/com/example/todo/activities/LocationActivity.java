@@ -2,18 +2,21 @@ package com.example.todo.activities;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.todo.BaseActivity;
 import com.example.todo.R;
 import com.example.todo.SelectedLocation;
+import com.example.todo.Todo;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,6 +31,12 @@ import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.PolyUtil;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -46,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class LocationActivity extends BaseActivity implements OnMapReadyCallback {
 
@@ -58,10 +68,22 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
 
     private Polyline currentRoutePolyline;
 
+    private FirebaseAuth mAuth;
+    private String currentUserId;
+    private DatabaseReference databaseRef;
+    private DatabaseReference markerRef;
+
+    private String directoryId;
+    private String todoId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+
+        Intent intent = getIntent();
+        directoryId = intent.getStringExtra("directoryId");
+        todoId = intent.getStringExtra("todoId");
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -69,7 +91,18 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
             mapFragment.getMapAsync(this);
         }
 
+        String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
+        databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
 
+        mAuth = FirebaseAuth.getInstance();
+
+        if (mAuth.getCurrentUser() != null) {
+            currentUserId = mAuth.getCurrentUser().getUid();
+        } else {
+            currentUserId = "anonymous";
+        }
+
+        markerRef = databaseRef.child(currentUserId).child("directories").child(directoryId).child("todos").child(todoId).child("locationMarkers");
 
         if (!Places.isInitialized()) {
             try {
@@ -108,6 +141,60 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
         Button btnDrawRoute = findViewById(R.id.btn_draw_route);
         btnDrawRoute.setOnClickListener(v -> {
             requestRoute(selectedLocations);
+        });
+
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
+        loadMarkersFromFirebase();
+    }
+
+    private void loadMarkersFromFirebase() {
+        markerRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                markers.clear();
+                mMap.clear();
+
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    try {
+                        // Navigate to the fields
+                        DataSnapshot geometrySnapshot = snapshot.child("geometry");
+                        DataSnapshot coordinatesSnapshot = geometrySnapshot.child("coordinates");
+                        DataSnapshot propertiesSnapshot = snapshot.child("properties");
+
+                        double longitude = coordinatesSnapshot.child("0").getValue(Double.class);
+                        double latitude = coordinatesSnapshot.child("1").getValue(Double.class);
+                        LatLng latLng = new LatLng(latitude, longitude);
+
+                        String title = propertiesSnapshot.child("title").getValue(String.class);
+                        String snippet = propertiesSnapshot.child("snippet").getValue(String.class);
+
+                        Marker marker = mMap.addMarker(new MarkerOptions()
+                                .position(latLng)
+                                .title(title)
+                                .snippet(snippet));
+
+                        if (marker != null) {
+                            markers.add(marker);
+                        }
+                    } catch (Exception e) {
+                        Log.e("LocationActivity", "Error parsing GeoJSON marker: " + e.getMessage());
+                    }
+                }
+
+                if (!markers.isEmpty()) {
+                    Marker last = markers.get(markers.size() - 1);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e("LocationActivity", "Failed to load markers: " + databaseError.getMessage());
+                Toast.makeText(LocationActivity.this, "Failed to load markers.", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -284,7 +371,7 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            snippetText = "Błąd pobierania adresu. Współrzędne: " + latLng.latitude + ", " + latLng.longitude;
+            snippetText = "Współrzędne: " + latLng.latitude + ", " + latLng.longitude;
             Toast.makeText(this, "Błąd sieci — nie można pobrać adresu", Toast.LENGTH_SHORT).show();
         }
 
@@ -296,8 +383,23 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
         if (marker != null) {
             marker.showInfoWindow();
             markers.add(marker);
-            selectedLocations.add(new SelectedLocation(latLng, marker));
+//            selectedLocations.add(new SelectedLocation(latLng, marker));
+
+            SelectedLocation loc = new SelectedLocation(latLng, marker, title, snippetText);
+
+            // To save GeoJSON feature as a JSON map
+            Map<String, Object> geoJsonFeature = loc.toGeoJsonFeature();
+            markerRef.push().setValue(geoJsonFeature);
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@androidx.annotation.NonNull android.view.MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
 

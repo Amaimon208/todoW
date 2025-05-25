@@ -51,7 +51,7 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
         // Regular click opens the DetailsActivity
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, DetailsActivity.class);
-            intent.putExtra("todoID", todo.getId());
+            intent.putExtra("todoId", todo.getId());
             intent.putExtra("directoryId", directoryId); // assuming you have this field
             context.startActivity(intent);
         });
@@ -175,7 +175,7 @@ public class TodoAdapter extends RecyclerView.Adapter<TodoAdapter.TodoViewHolder
         Intent intent = new Intent(context, AddTodosActivity.class);
         intent.putExtra("directoryId", directoryId);
         intent.putExtra("userId", currentUserId);
-        intent.putExtra("todoID", todo.getId());
+        intent.putExtra("todoId", todo.getId());
         context.startActivity(intent);
     }
         static class TodoViewHolder extends RecyclerView.ViewHolder {

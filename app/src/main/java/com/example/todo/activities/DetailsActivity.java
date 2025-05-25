@@ -43,7 +43,7 @@ public class DetailsActivity extends BaseActivity {
         currentUserId = (mAuth.getCurrentUser() != null) ? mAuth.getCurrentUser().getUid() : "anonymous";
 
         Intent intent = getIntent();
-        todoID = intent.getStringExtra("todoID");
+        todoID = intent.getStringExtra("todoId");
         directoryID = intent.getStringExtra("directoryId");
 
         if (getSupportActionBar() != null) {
@@ -62,7 +62,7 @@ public class DetailsActivity extends BaseActivity {
 
         editButton.setOnClickListener(v -> {
             Intent editIntent = new Intent(this, AddTodosActivity.class);
-            editIntent.putExtra("todoID", todoID);
+            editIntent.putExtra("todoId", todoID);
             editIntent.putExtra("directoryId", directoryID);
             startActivity(editIntent);
         });
