@@ -74,6 +74,9 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
     private String directoryId;
     private String todoId;
 
+    private Marker lastClickedMarker = null;
+    private long lastClickTime = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -328,25 +331,34 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
     });
 
     mMap.setOnMarkerClickListener(marker -> {
-        marker.showInfoWindow();
-        // Show a dialog to confirm deletion
-        new AlertDialog.Builder(LocationActivity.this)
-                .setTitle("Usuń lokalizację")
-                .setMessage("Czy chcesz usunąć tę lokalizację?")
-                .setPositiveButton("Tak", (dialog, which) -> {
-                    // Remove marker from map
-                    marker.remove();
+        long currentTime = System.currentTimeMillis();
 
-                    // Remove from list
-                    for (int i = 0; i < selectedLocations.size(); i++) {
-                        if (selectedLocations.get(i).getMarker().equals(marker)) {
-                            selectedLocations.remove(i);
-                            break;
+        if (marker.equals(lastClickedMarker) && (currentTime - lastClickTime < 1500)) {
+            // Double-tap detected — delete marker
+            new AlertDialog.Builder(LocationActivity.this)
+                    .setTitle("Usuń lokalizację")
+                    .setMessage("Czy chcesz usunąć tę lokalizację?")
+                    .setPositiveButton("Tak", (dialog, which) -> {
+                        marker.remove();
+
+                        // Remove from selectedLocations
+                        for (int i = 0; i < selectedLocations.size(); i++) {
+                            if (selectedLocations.get(i).getLatLng().equals(marker.getPosition())) {
+                                selectedLocations.remove(i);
+                                break;
+                            }
                         }
-                    }
-                })
-                .setNegativeButton("Anuluj", null)
-                .show();
+
+                        lastClickedMarker = null; // Reset
+                    })
+                    .setNegativeButton("Anuluj", null)
+                    .show();
+        } else {
+            // First tap — show info window
+            marker.showInfoWindow();
+            lastClickedMarker = marker;
+            lastClickTime = currentTime;
+        }
 
         return true;
     });
