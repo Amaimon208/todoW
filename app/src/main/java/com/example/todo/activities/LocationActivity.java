@@ -16,7 +16,6 @@ import android.widget.Toast;
 import com.example.todo.BaseActivity;
 import com.example.todo.R;
 import com.example.todo.SelectedLocation;
-import com.example.todo.Todo;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -60,7 +59,6 @@ import java.util.Map;
 public class LocationActivity extends BaseActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private List<Marker> markers = new ArrayList<>();
 
     private final List<SelectedLocation> selectedLocations = new ArrayList<>();
 
@@ -155,7 +153,8 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
         markerRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                markers.clear();
+                //markers.clear();
+                selectedLocations.clear();
                 mMap.clear();
 
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -178,15 +177,15 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
                                 .snippet(snippet));
 
                         if (marker != null) {
-                            markers.add(marker);
+                            selectedLocations.add(new SelectedLocation(latLng, marker, title, snippet));
                         }
                     } catch (Exception e) {
                         Log.e("LocationActivity", "Error parsing GeoJSON marker: " + e.getMessage());
                     }
                 }
 
-                if (!markers.isEmpty()) {
-                    Marker last = markers.get(markers.size() - 1);
+                if (!selectedLocations.isEmpty()) {
+                    SelectedLocation last = selectedLocations.get(selectedLocations.size() - 1);
                 }
             }
 
@@ -219,7 +218,6 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
         destination.put("location", destLocation);
         root.put("destination", destination);
 
-        // Intermediates (waypoints)
         JSONArray intermediates = new JSONArray();
         for (int i = 1; i < locations.size() - 1; i++) {
             JSONObject intermediate = new JSONObject();
@@ -356,7 +354,7 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
 
     private void addMarkerWithAddress(LatLng latLng) {
         if (latLng == null || mMap == null) return;
-        String title = "Localization " + (markers.size() + 1);
+        String title = "Localization " + (selectedLocations.size() + 1);
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         String snippetText;
 
@@ -382,8 +380,7 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
 
         if (marker != null) {
             marker.showInfoWindow();
-            markers.add(marker);
-//            selectedLocations.add(new SelectedLocation(latLng, marker));
+            selectedLocations.add(new SelectedLocation(latLng, marker, title, snippetText));
 
             SelectedLocation loc = new SelectedLocation(latLng, marker, title, snippetText);
 
