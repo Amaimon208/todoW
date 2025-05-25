@@ -5,6 +5,8 @@ import android.app.AlertDialog;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.Toast;
@@ -34,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -92,10 +95,7 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
             public void onPlaceSelected(@NonNull Place place) {
                 LatLng latLng = place.getLatLng();
                 if (latLng != null) {
-                    Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).title(place.getName()));
-                    markers.add(marker);
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
-                    selectedLatLng = latLng;
+                    addMarkerWithAddress(latLng);
                 }
             }
 
@@ -152,76 +152,6 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
 
         return root;
     }
-
-//    private void drawFullRouteWithWaypoints(List<SelectedLocation> locations) {
-//        if (locations.size() < 2) {
-//            Toast.makeText(this, "Potrzeba co najmniej 2 lokalizacji", Toast.LENGTH_SHORT).show();
-//            return;
-//        }
-//
-//        String apiKey = getString(R.string.google_maps_key); // or load from meta-data
-//        LatLng origin = locations.get(0).getLatLng();
-//        LatLng destination = locations.get(locations.size() - 1).getLatLng();
-//
-//        // Build waypoints string
-//        StringBuilder waypoints = new StringBuilder();
-//        for (int i = 1; i < locations.size() - 1; i++) {
-//            LatLng point = locations.get(i).getLatLng();
-//            waypoints.append(point.latitude).append(",").append(point.longitude);
-//            if (i < locations.size() - 2) {
-//                waypoints.append("|");
-//            }
-//        }
-//
-//        // Build request URL
-//        String url = "https://maps.googleapis.com/maps/api/directions/json?"
-//                + "origin=" + origin.latitude + "," + origin.longitude
-//                + "&destination=" + destination.latitude + "," + destination.longitude
-//                + (waypoints.length() > 0 ? "&waypoints=" + waypoints : "")
-//                + "&key=" + apiKey;
-//
-//        Log.d("DIRECTIONS_URL", url);
-//
-//        new Thread(() -> {
-//            try {
-//                URL requestUrl = new URL(url);
-//                HttpURLConnection connection = (HttpURLConnection) requestUrl.openConnection();
-//                connection.connect();
-//
-//                InputStreamReader input = new InputStreamReader(connection.getInputStream());
-//                BufferedReader reader = new BufferedReader(input);
-//
-//                StringBuilder sb = new StringBuilder();
-//                String line;
-//                while ((line = reader.readLine()) != null) {
-//                    sb.append(line);
-//                }
-//
-//                JSONObject jsonResponse = new JSONObject(sb.toString());
-//                JSONArray routes = jsonResponse.getJSONArray("routes");
-//
-//                if (routes.length() > 0) {
-//                    JSONObject route = routes.getJSONObject(0);
-//                    JSONObject overviewPolyline = route.getJSONObject("overview_polyline");
-//                    String encodedPolyline = overviewPolyline.getString("points");
-//
-//                    List<LatLng> points = PolyUtil.decode(encodedPolyline);
-//
-//                    runOnUiThread(() -> {
-//                        mMap.addPolyline(new PolylineOptions()
-//                                .addAll(points)
-//                                .color(Color.BLUE)
-//                                .width(10f));
-//                    });
-//                } else {
-//                    runOnUiThread(() -> Toast.makeText(this, "Nie udało się wyznaczyć trasy", Toast.LENGTH_SHORT).show());
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                runOnUiThread(() -> Toast.makeText(this, "Błąd podczas pobierania trasy", Toast.LENGTH_SHORT).show());
-//            }
-//        }).start();
-//    }
 
     private void requestRoute(List<SelectedLocation> locations) {
         if (locations.size() < 2) {
@@ -296,51 +226,6 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
         }).start();
     }
 
-
-
-    //    @Override
-//    public void onMapReady(@NonNull GoogleMap googleMap) {
-//        mMap = googleMap;
-//
-//        mMap.getUiSettings().setZoomControlsEnabled(true);
-//        mMap.getUiSettings().setZoomGesturesEnabled(true);
-//
-//        // Uniwersytet Zielonogórski - Kampus A
-//        LatLng campusA = new LatLng(51.941618, 15.529289);
-//        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(campusA, 17)); // 17 = dobre przybliżenie budynku
-//        mMap.addMarker(new MarkerOptions().position(campusA).title("UZ - Kampus A"));
-//
-//        mMap.setOnMapClickListener(latLng -> {
-//            mMap.clear();
-//            mMap.addMarker(new MarkerOptions().position(latLng).title("Wybrana lokalizacja"));
-//            selectedLatLng = latLng;
-//
-//            Intent resultIntent = new Intent();
-//            resultIntent.putExtra("lat", latLng.latitude);
-//            resultIntent.putExtra("lng", latLng.longitude);
-//            setResult(RESULT_OK, resultIntent);
-//            finish();
-//        });
-//
-//        //Geolocation button
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-//                != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this,
-//                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-//            return;
-//        }
-//
-//        mMap.setMyLocationEnabled(true);
-//
-//        FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-//        fusedLocationClient.getLastLocation()
-//                .addOnSuccessListener(this, location -> {
-//                    if (location != null) {
-//                        LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-//                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
-//                    }
-//                });
-//    }
 @SuppressLint("PotentialBehaviorOverride")
 @Override
 public void onMapReady(@NonNull GoogleMap googleMap) {
@@ -352,24 +237,13 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
     // Uniwersytet Zielonogórski - Kampus A
     LatLng campusA = new LatLng(51.941618, 15.529289);
     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(campusA, 17));
-//    mMap.addMarker(new MarkerOptions().position(campusA).title("UZ - Kampus A"));
 
     mMap.setOnMapClickListener(latLng -> {
-        // No longer clearing the map to allow multiple selections
-        Marker marker = mMap.addMarker(new MarkerOptions().position(latLng).title("Wybrana lokalizacja"));
-        markers.add(marker); // Store marker for later use
-        selectedLocations.add(new SelectedLocation(latLng, marker));
-
-        // TODO: Show a dialog, bottom sheet, or some UI to enter additional info for this location
-
-        // TODO: Create a data structure (e.g. custom class) to hold all info (lat, lng, user comment, etc.)
-
-        // TODO: Eventually convert selectedLocations into a GeoJSON format and store it
-
-        // NOTE: Don't finish() or return the result yet – user might want to add more locations
+        addMarkerWithAddress(latLng);
     });
 
     mMap.setOnMarkerClickListener(marker -> {
+        marker.showInfoWindow();
         // Show a dialog to confirm deletion
         new AlertDialog.Builder(LocationActivity.this)
                 .setTitle("Usuń lokalizację")
@@ -391,14 +265,39 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
 
         return true;
     });
+    }
 
-//    fusedLocationClient.getLastLocation()
-//            .addOnSuccessListener(this, location -> {
-//                if (location != null) {
-//                    LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-//                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15));
-//                }
-//            });
+    private void addMarkerWithAddress(LatLng latLng) {
+        if (latLng == null || mMap == null) return;
+        String title = "Localization " + (markers.size() + 1);
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        String snippetText;
+
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                snippetText = address.getAddressLine(0);
+            } else {
+                snippetText = "Brak adresu. Współrzędne: " + latLng.latitude + ", " + latLng.longitude;
+                Toast.makeText(this, "Nie udało się pobrać adresu", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            snippetText = "Błąd pobierania adresu. Współrzędne: " + latLng.latitude + ", " + latLng.longitude;
+            Toast.makeText(this, "Błąd sieci — nie można pobrać adresu", Toast.LENGTH_SHORT).show();
+        }
+
+        Marker marker = mMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .title(title)
+                .snippet(snippetText));
+
+        if (marker != null) {
+            marker.showInfoWindow();
+            markers.add(marker);
+            selectedLocations.add(new SelectedLocation(latLng, marker));
+        }
     }
 }
 
