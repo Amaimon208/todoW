@@ -26,14 +26,29 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switch_draw_route"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pokaż trasę "
-        android:layout_margin="16dp"
-        android:textColor="@android:color/black"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        <ImageButton
+            android:id="@+id/btn_add_marker"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="4dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Dodaj marker"
+            android:src="@drawable/baseline_place_24"
+            app:tint="@color/purple_500"
+            app:layout_constraintBottom_toTopOf="@id/switch_draw_route"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Draw Route Switch BELOW the button -->
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switch_draw_route"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pokaż trasę"
+            android:textColor="@android:color/black"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

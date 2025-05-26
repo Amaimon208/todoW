@@ -11,7 +11,10 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -165,7 +168,67 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
+
+        ImageButton btnAddMarker = findViewById(R.id.btn_add_marker);
+
+        btnAddMarker.setOnClickListener(v -> showMarkerInputDialog());
     }
+
+    private void showMarkerInputDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Dodaj marker");
+
+        // Inflate layout dialogu z wszystkimi polami
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_marker, null);
+
+        EditText etTitle = dialogView.findViewById(R.id.et_marker_title);
+        EditText etSnippet = dialogView.findViewById(R.id.et_marker_snippet);
+        EditText etLatitude = dialogView.findViewById(R.id.et_latitude);
+        EditText etLongitude = dialogView.findViewById(R.id.et_longitude);
+
+        builder.setView(dialogView);
+
+        builder.setPositiveButton("OK", (dialog, which) -> {
+            String title = etTitle.getText().toString().trim();
+            String snippet = etSnippet.getText().toString().trim();
+            String latStr = etLatitude.getText().toString().trim();
+            String lngStr = etLongitude.getText().toString().trim();;
+
+            if (title.isEmpty() || snippet.isEmpty() || latStr.isEmpty() || lngStr.isEmpty()) {
+                Toast.makeText(this, "Wypełnij wszystkie wymagane pola (tytuł, opis, szerokość i długość)", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            double latitude, longitude;
+            try {
+                latitude = Double.parseDouble(latStr);
+                longitude = Double.parseDouble(lngStr);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Niepoprawny format współrzędnych", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            LatLng position = new LatLng(latitude, longitude);
+
+            Marker marker = mMap.addMarker(new MarkerOptions()
+                    .position(position)
+                    .title(title)
+                    .snippet(snippet));
+
+            if (marker != null) {
+                marker.showInfoWindow();
+                selectedLocations.add(new SelectedLocation(position, marker, title, snippet));
+            }
+
+            if (drawRoute) {
+                requestRoute(selectedLocations);
+            }
+        });
+
+        builder.setNegativeButton("Anuluj", null);
+        builder.show();
+    }
+
 
     private void loadMarkersFromIntent() {
         Intent intent = getIntent();

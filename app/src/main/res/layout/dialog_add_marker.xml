@@ -1,0 +1,44 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/et_marker_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Tytuł (title)" />
+
+        <EditText
+            android:id="@+id/et_marker_snippet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Opis (description/snippet)" />
+
+        <EditText
+            android:id="@+id/et_latitude"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="Szerokość geograficzna (latitude)" />
+
+        <EditText
+            android:id="@+id/et_longitude"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="Długość geograficzna (longitude)" />
+
+        <Button
+            android:id="@+id/btn_confirm_marker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dodaj marker" />
+    </LinearLayout>
+</ScrollView>
