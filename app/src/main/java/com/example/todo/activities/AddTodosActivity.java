@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,8 +23,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.todo.BaseActivity;
+import com.example.todo.GeoJsonUtils;
 import com.example.todo.R;
+import com.example.todo.SelectedLocation;
 import com.example.todo.Todo;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -33,6 +37,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class AddTodosActivity extends BaseActivity {
@@ -54,12 +61,15 @@ public class AddTodosActivity extends BaseActivity {
 
     private FloatingActionButton deleteButton;
 
+    private List<SelectedLocation> selectedLocations = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         directoryId = intent.getStringExtra("directoryId");
         todoId = intent.getStringExtra("todoId");
+        //Move fetching  data to AddTODO Activity and move it via intent
 
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
         databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
@@ -88,19 +98,71 @@ public class AddTodosActivity extends BaseActivity {
             Intent newIntent = new Intent(AddTodosActivity.this, LocationActivity.class);
             newIntent.putExtra("directoryId", directoryId);
             newIntent.putExtra("todoId", todoId);
+            if(!selectedLocations.isEmpty()){
+
+                String geoJsonString = GeoJsonUtils.toGeoJsonString(selectedLocations);
+                newIntent.putExtra("geojson",  geoJsonString);
+            }
             startActivityForResult(newIntent, REQUEST_LOCATION);
         });
 
-
-//        Intent intent = new Intent(this, AddTodosActivity.class);
+        //Intent intent = new Intent(this, AddTodosActivity.class);
         todosRef = databaseRef.child(currentUserId).child("directories").child(directoryId).child("todos");
 
         if(todoExist()){
             setCurrentData();
         }
         setPictureVisibility();
+        loadMarkersFromFirebase();
     }
+    //    @Override
+    //    protected void onResume() {
+    //        super.onResume();
+    //        Intent intent = getIntent();
+    //        String selectedLocationsString = intent.getStringExtra("geojson");
+    //        if(selectedLocationsString != null){
+    //            selectedLocations = GeoJsonUtils.fromGeoJsonString(selectedLocationsString);
+    //        }
+    //    }
 
+        private void loadMarkersFromFirebase() {
+            if(todoId != null) {
+                todosRef.child(todoId).child("locationMarkers").addValueEventListener (new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                        if(selectedLocations != null) {
+//                            selectedLocations.clear();
+//                        }
+                        selectedLocations = new ArrayList<>();
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            try {
+                                // Navigate to the fields
+                                DataSnapshot geometrySnapshot = snapshot.child("geometry");
+                                DataSnapshot coordinatesSnapshot = geometrySnapshot.child("coordinates");
+                                DataSnapshot propertiesSnapshot = snapshot.child("properties");
+
+                                double longitude = coordinatesSnapshot.child("0").getValue(Double.class);
+                                double latitude = coordinatesSnapshot.child("1").getValue(Double.class);
+                                LatLng latLng = new LatLng(latitude, longitude);
+
+                                String title = propertiesSnapshot.child("title").getValue(String.class);
+                                String snippet = propertiesSnapshot.child("snippet").getValue(String.class);
+
+                                selectedLocations.add(new SelectedLocation(latLng, null, title, snippet));
+                            } catch (Exception e) {
+                                Log.e("LocationActivity", "Error parsing GeoJSON marker: " + e.getMessage());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        Log.e("LocationActivity", "Failed to load markers: " + databaseError.getMessage());
+                        Toast.makeText(AddTodosActivity.this, "Failed to load markers.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+    }
 
     private boolean todoExist() {
         return todoId != null;
@@ -182,6 +244,7 @@ public class AddTodosActivity extends BaseActivity {
                     Toast.makeText(this, "Failed to save todo.", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 });
+        addMarkerToDatabase();
         finish();
     }
 
@@ -211,6 +274,11 @@ public class AddTodosActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        String selectedLocationsString = data.getStringExtra("geojson");
+        if(selectedLocationsString != null) {
+            selectedLocations = GeoJsonUtils.fromGeoJsonString(selectedLocationsString);
+        }
 
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
@@ -260,6 +328,24 @@ public class AddTodosActivity extends BaseActivity {
             Toast.makeText(this, "Image removed.", Toast.LENGTH_SHORT).show();
             setPictureVisibility();
         });
+    }
+
+    private void addMarkerToDatabase() {
+        if(selectedLocations != null) {
+            todosRef.child(todoId).child("locationMarkers").removeValue()
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d("Firebase", "All location markers deleted.");
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("Firebase", "Failed to delete markers: " + e.getMessage());
+                    });
+            for(int i=0; i < selectedLocations.size(); i++ ){
+                Map<String, Object> geoJson = selectedLocations.get(i).toGeoJsonFeature();
+                todosRef.child(todoId)
+                        .child("locationMarkers").push().setValue(geoJson);
+            }
+
+        }
     }
 
     @Override

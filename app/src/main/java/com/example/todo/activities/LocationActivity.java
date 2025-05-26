@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
@@ -14,6 +15,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.todo.BaseActivity;
+import com.example.todo.GeoJsonUtils;
 import com.example.todo.R;
 import com.example.todo.SelectedLocation;
 import com.google.android.gms.common.api.Status;
@@ -54,13 +56,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class LocationActivity extends BaseActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
 
-    private final List<SelectedLocation> selectedLocations = new ArrayList<>();
+    private List<SelectedLocation> selectedLocations = new ArrayList<>();
 
     private LatLng selectedLatLng;
 
@@ -149,55 +150,61 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
-        loadMarkersFromFirebase();
     }
 
-    private void loadMarkersFromFirebase() {
-        markerRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                //markers.clear();
-                selectedLocations.clear();
-                mMap.clear();
+//    private void loadMarkersFromFirebase() {
+//        markerRef.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                selectedLocations.clear();
+//                mMap.clear();
+//
+//                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+//                    try {
+//                        // Navigate to the fields
+//                        DataSnapshot geometrySnapshot = snapshot.child("geometry");
+//                        DataSnapshot coordinatesSnapshot = geometrySnapshot.child("coordinates");
+//                        DataSnapshot propertiesSnapshot = snapshot.child("properties");
+//
+//                        double longitude = coordinatesSnapshot.child("0").getValue(Double.class);
+//                        double latitude = coordinatesSnapshot.child("1").getValue(Double.class);
+//                        LatLng latLng = new LatLng(latitude, longitude);
+//
+//                        String title = propertiesSnapshot.child("title").getValue(String.class);
+//                        String snippet = propertiesSnapshot.child("snippet").getValue(String.class);
+//
+//                        Marker marker = mMap.addMarker(new MarkerOptions()
+//                                .position(latLng)
+//                                .title(title)
+//                                .snippet(snippet));
+//
+//                        if (marker != null) {
+//                            selectedLocations.add(new SelectedLocation(latLng, marker, title, snippet));
+//                        }
+//                    } catch (Exception e) {
+//                        Log.e("LocationActivity", "Error parsing GeoJSON marker: " + e.getMessage());
+//                    }
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//                Log.e("LocationActivity", "Failed to load markers: " + databaseError.getMessage());
+//                Toast.makeText(LocationActivity.this, "Failed to load markers.", Toast.LENGTH_SHORT).show();
+//            }
+//        });
+//    }
 
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    try {
-                        // Navigate to the fields
-                        DataSnapshot geometrySnapshot = snapshot.child("geometry");
-                        DataSnapshot coordinatesSnapshot = geometrySnapshot.child("coordinates");
-                        DataSnapshot propertiesSnapshot = snapshot.child("properties");
+    private void loadMarkersFromIntent() {
+        Intent intent = getIntent();
+        String geojson = intent.getStringExtra("geojson");
+        if(geojson!= null) {
+            selectedLocations = GeoJsonUtils.fromGeoJsonString(geojson);
+        }
 
-                        double longitude = coordinatesSnapshot.child("0").getValue(Double.class);
-                        double latitude = coordinatesSnapshot.child("1").getValue(Double.class);
-                        LatLng latLng = new LatLng(latitude, longitude);
-
-                        String title = propertiesSnapshot.child("title").getValue(String.class);
-                        String snippet = propertiesSnapshot.child("snippet").getValue(String.class);
-
-                        Marker marker = mMap.addMarker(new MarkerOptions()
-                                .position(latLng)
-                                .title(title)
-                                .snippet(snippet));
-
-                        if (marker != null) {
-                            selectedLocations.add(new SelectedLocation(latLng, marker, title, snippet));
-                        }
-                    } catch (Exception e) {
-                        Log.e("LocationActivity", "Error parsing GeoJSON marker: " + e.getMessage());
-                    }
-                }
-
-                if (!selectedLocations.isEmpty()) {
-                    SelectedLocation last = selectedLocations.get(selectedLocations.size() - 1);
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.e("LocationActivity", "Failed to load markers: " + databaseError.getMessage());
-                Toast.makeText(LocationActivity.this, "Failed to load markers.", Toast.LENGTH_SHORT).show();
-            }
-        });
+        for (int i = 0; i < selectedLocations.size(); i++) {
+            selectedLocations.get(i).recreateMarker(mMap);
+        }
     }
 
     private JSONObject buildRoutesApiRequestBody(List<SelectedLocation> locations) throws JSONException, JSONException {
@@ -318,6 +325,7 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
 @Override
 public void onMapReady(@NonNull GoogleMap googleMap) {
     mMap = googleMap;
+    loadMarkersFromIntent();
 
     mMap.getUiSettings().setZoomControlsEnabled(true);
     mMap.getUiSettings().setZoomGesturesEnabled(true);
@@ -393,22 +401,44 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
         if (marker != null) {
             marker.showInfoWindow();
             selectedLocations.add(new SelectedLocation(latLng, marker, title, snippetText));
-
-            SelectedLocation loc = new SelectedLocation(latLng, marker, title, snippetText);
-
-            // To save GeoJSON feature as a JSON map
-            Map<String, Object> geoJsonFeature = loc.toGeoJsonFeature();
-            markerRef.push().setValue(geoJsonFeature);
+//
+//            SelectedLocation loc = new SelectedLocation(latLng, marker, title, snippetText);
+//
+//            // To save GeoJSON feature as a JSON map
+//            Map<String, Object> geoJsonFeature = loc.toGeoJsonFeature();
+//            markerRef.push().setValue(geoJsonFeature);
         }
     }
 
-    @Override
-    public boolean onOptionsItemSelected(@androidx.annotation.NonNull android.view.MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
+//    @Override
+//    public boolean onOptionsItemSelected(@androidx.annotation.NonNull android.view.MenuItem item) {
+//        if (item.getItemId() == android.R.id.home) {
+//            finish();
+//            return true;
+//        }
+//        return super.onOptionsItemSelected(item);
+//    }
+@Override
+public boolean onOptionsItemSelected(@androidx.annotation.NonNull android.view.MenuItem item) {
+    if (item.getItemId() == android.R.id.home) {
+        // Create a new Intent to hold result data
+        Intent resultIntent = new Intent();
+
+        if(!selectedLocations.isEmpty()){
+
+            String geoJsonString = GeoJsonUtils.toGeoJsonString(selectedLocations);
+            resultIntent.putExtra("geojson",  geoJsonString);
         }
-        return super.onOptionsItemSelected(item);
+
+
+        // Set the result for the calling activity
+        setResult(RESULT_OK, resultIntent);
+
+        // Finish and return
+        finish();
+        return true;
     }
+    return super.onOptionsItemSelected(item);
+}
 }
 

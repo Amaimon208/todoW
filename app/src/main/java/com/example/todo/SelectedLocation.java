@@ -1,7 +1,11 @@
 package com.example.todo;
 
+import android.util.Log;
+
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,6 +40,22 @@ public class SelectedLocation {
 
     public String getSnippet() {
         return snippet;
+    }
+
+    public void recreateMarker(GoogleMap mMap) {
+        if(latLng != null && title != null && snippet!= null){
+            marker = mMap.addMarker(new MarkerOptions()
+                    .position(latLng)
+                    .title(title)
+                    .snippet(snippet));
+        } else {
+            Log.e("LocationActivity", "Missing latLng "
+                    + latLng
+                    +", title "
+                    + title
+                    + " or snippet "
+                    + snippet);
+        }
     }
 
     // Convert to GeoJSON feature as a Map<String,Object>
