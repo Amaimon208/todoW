@@ -63,12 +63,15 @@ public class AddTodosActivity extends BaseActivity {
 
     private List<SelectedLocation> selectedLocations = null;
 
+    private boolean drawRoute;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
         directoryId = intent.getStringExtra("directoryId");
         todoId = intent.getStringExtra("todoId");
+        drawRoute = getIntent().getBooleanExtra("drawRoute", false);
         //Move fetching  data to AddTODO Activity and move it via intent
 
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
@@ -98,6 +101,7 @@ public class AddTodosActivity extends BaseActivity {
             Intent newIntent = new Intent(AddTodosActivity.this, LocationActivity.class);
             newIntent.putExtra("directoryId", directoryId);
             newIntent.putExtra("todoId", todoId);
+            newIntent.putExtra("drawRoute", drawRoute);
             if(!selectedLocations.isEmpty()){
 
                 String geoJsonString = GeoJsonUtils.toGeoJsonString(selectedLocations);
@@ -121,6 +125,16 @@ public class AddTodosActivity extends BaseActivity {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         selectedLocations = new ArrayList<>();
+
+                        String route = dataSnapshot.child("route").getValue(String.class);
+                        if(route != null) {
+                            if(route.equals("true")) {
+                                drawRoute = true;
+                            }else{
+                                drawRoute = false;
+                            }
+                        }
+
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             try {
                                 // Navigate to the fields
@@ -231,6 +245,7 @@ public class AddTodosActivity extends BaseActivity {
                     Toast.makeText(this, "Failed to save todo.", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 });
+
         addMarkerToDatabase();
         finish();
     }
@@ -278,6 +293,8 @@ public class AddTodosActivity extends BaseActivity {
                 }
             }
         }
+
+        drawRoute = data.getBooleanExtra("drawRoute", false);
     }
 
     private void setupCameraButton() {
@@ -331,7 +348,9 @@ public class AddTodosActivity extends BaseActivity {
                 todosRef.child(todoId)
                         .child("locationMarkers").push().setValue(geoJson);
             }
-
+        }
+        if(drawRoute){
+            todosRef.child(todoId).child("locationMarkers").child("route").setValue("true");
         }
     }
 

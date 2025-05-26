@@ -12,7 +12,10 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.Toast;
+
+import androidx.appcompat.widget.SwitchCompat;
 
 import com.example.todo.BaseActivity;
 import com.example.todo.GeoJsonUtils;
@@ -77,6 +80,7 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
 
     private Marker lastClickedMarker = null;
     private long lastClickTime = 0;
+    private boolean drawRoute = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +96,8 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
+
+        SwitchCompat drawRouteSwitch = findViewById(R.id.switch_draw_route);
 
         String firebaseURL = "https://to-do-plus-plus-3bb3e-default-rtdb.europe-west1.firebasedatabase.app";
         databaseRef = FirebaseDatabase.getInstance(firebaseURL).getReference("users");
@@ -140,11 +146,20 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
             }
         });
 
-        Button btnDrawRoute = findViewById(R.id.btn_draw_route);
-        btnDrawRoute.setOnClickListener(v -> {
-            requestRoute(selectedLocations);
-        });
+        drawRouteSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            drawRoute = isChecked;
 
+            if (isChecked) {
+                if (currentRoutePolyline != null) {
+                    currentRoutePolyline.remove();
+                }
+                requestRoute(selectedLocations);
+            } else {
+                if (currentRoutePolyline != null) {
+                    currentRoutePolyline.remove();
+                }
+            }
+        });
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -161,6 +176,10 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
 
         for (int i = 0; i < selectedLocations.size(); i++) {
             selectedLocations.get(i).recreateMarker(mMap);
+        }
+        drawRoute = getIntent().getBooleanExtra("drawRoute", false);
+        if(drawRoute){
+            requestRoute(selectedLocations);
         }
     }
 
@@ -359,6 +378,11 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
             marker.showInfoWindow();
             selectedLocations.add(new SelectedLocation(latLng, marker, title, snippetText));
         }
+
+        if(drawRoute){
+            currentRoutePolyline.remove();
+            requestRoute(selectedLocations);
+        }
     }
     @Override
     public boolean onOptionsItemSelected(@androidx.annotation.NonNull android.view.MenuItem item) {
@@ -371,6 +395,7 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
                 String geoJsonString = GeoJsonUtils.toGeoJsonString(selectedLocations);
                 resultIntent.putExtra("geojson",  geoJsonString);
             }
+            resultIntent.putExtra("drawRoute", drawRoute);
 
             // Set the result for the calling activity
             setResult(RESULT_OK, resultIntent);
