@@ -42,3 +42,61 @@
             android:text="Dodaj marker" />
     </LinearLayout>
 </ScrollView>
+
+<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--android:orientation="vertical"-->
+<!--android:padding="24dp"-->
+<!--android:layout_width="match_parent"-->
+<!--android:layout_height="wrap_content">-->
+
+<!--<androidx.appcompat.widget.SwitchCompat-->
+<!--    android:id="@+id/switch_file_type"-->
+<!--    android:layout_width="wrap_content"-->
+<!--    android:layout_height="wrap_content"-->
+<!--    android:text="Użyj Shapefile"-->
+<!--    android:layout_marginBottom="16dp" />-->
+
+<!--&lt;!&ndash; Pola dla GeoJSON &ndash;&gt;-->
+<!--<LinearLayout-->
+<!--    android:id="@+id/layout_geojson"-->
+<!--    android:orientation="vertical"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="wrap_content">-->
+
+<!--    <EditText-->
+<!--        android:id="@+id/et_marker_title"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="Tytuł (GeoJSON)" />-->
+
+<!--    <EditText-->
+<!--        android:id="@+id/et_marker_snippet"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="Opis (GeoJSON)" />-->
+<!--</LinearLayout>-->
+
+<!--&lt;!&ndash; Pola dla Shapefile &ndash;&gt;-->
+<!--<LinearLayout-->
+<!--    android:id="@+id/layout_shapefile"-->
+<!--    android:orientation="vertical"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="wrap_content"-->
+<!--    android:visibility="gone"> &lt;!&ndash; na start niewidoczny &ndash;&gt;-->
+
+<!--    <EditText-->
+<!--        android:id="@+id/et_shapefile_name"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="Nazwa Shapefile" />-->
+
+<!--    <EditText-->
+<!--        android:id="@+id/et_shapefile_description"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:hint="Opis Shapefile" />-->
+
+<!--    &lt;!&ndash; Możesz dodać więcej pól specyficznych dla Shapefile &ndash;&gt;-->
+<!--</LinearLayout>-->
+
+<!--</LinearLayout>-->

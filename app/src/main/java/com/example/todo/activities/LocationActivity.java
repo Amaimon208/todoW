@@ -190,9 +190,9 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
 
         builder.setPositiveButton("OK", (dialog, which) -> {
             String title = etTitle.getText().toString().trim();
-            String snippet = etSnippet.getText().toString().trim();
             String latStr = etLatitude.getText().toString().trim();
-            String lngStr = etLongitude.getText().toString().trim();;
+            String lngStr = etLongitude.getText().toString().trim();
+            String snippet = "Współrzędne: " + latStr + ", " + lngStr + " \n" + etSnippet.getText().toString().trim();
 
             if (title.isEmpty() || snippet.isEmpty() || latStr.isEmpty() || lngStr.isEmpty()) {
                 Toast.makeText(this, "Wypełnij wszystkie wymagane pola (tytuł, opis, szerokość i długość)", Toast.LENGTH_SHORT).show();
@@ -421,11 +421,10 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
             List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
-                snippetText = address.getAddressLine(0);
-            } else {
-                snippetText = "Brak adresu. Współrzędne: " + latLng.latitude + ", " + latLng.longitude;
-                Toast.makeText(this, "Nie udało się pobrać adresu", Toast.LENGTH_SHORT).show();
+                title = address.getAddressLine(0);
+
             }
+            snippetText = "Współrzędne: " + latLng.latitude + ", " + latLng.longitude;
         } catch (IOException e) {
             e.printStackTrace();
             snippetText = "Współrzędne: " + latLng.latitude + ", " + latLng.longitude;
