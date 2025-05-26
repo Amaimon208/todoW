@@ -152,49 +152,6 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
         }
     }
 
-//    private void loadMarkersFromFirebase() {
-//        markerRef.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                selectedLocations.clear();
-//                mMap.clear();
-//
-//                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-//                    try {
-//                        // Navigate to the fields
-//                        DataSnapshot geometrySnapshot = snapshot.child("geometry");
-//                        DataSnapshot coordinatesSnapshot = geometrySnapshot.child("coordinates");
-//                        DataSnapshot propertiesSnapshot = snapshot.child("properties");
-//
-//                        double longitude = coordinatesSnapshot.child("0").getValue(Double.class);
-//                        double latitude = coordinatesSnapshot.child("1").getValue(Double.class);
-//                        LatLng latLng = new LatLng(latitude, longitude);
-//
-//                        String title = propertiesSnapshot.child("title").getValue(String.class);
-//                        String snippet = propertiesSnapshot.child("snippet").getValue(String.class);
-//
-//                        Marker marker = mMap.addMarker(new MarkerOptions()
-//                                .position(latLng)
-//                                .title(title)
-//                                .snippet(snippet));
-//
-//                        if (marker != null) {
-//                            selectedLocations.add(new SelectedLocation(latLng, marker, title, snippet));
-//                        }
-//                    } catch (Exception e) {
-//                        Log.e("LocationActivity", "Error parsing GeoJSON marker: " + e.getMessage());
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//                Log.e("LocationActivity", "Failed to load markers: " + databaseError.getMessage());
-//                Toast.makeText(LocationActivity.this, "Failed to load markers.", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-//    }
-
     private void loadMarkersFromIntent() {
         Intent intent = getIntent();
         String geojson = intent.getStringExtra("geojson");
@@ -321,55 +278,55 @@ public class LocationActivity extends BaseActivity implements OnMapReadyCallback
         }).start();
     }
 
-@SuppressLint("PotentialBehaviorOverride")
-@Override
-public void onMapReady(@NonNull GoogleMap googleMap) {
-    mMap = googleMap;
-    loadMarkersFromIntent();
+    @SuppressLint("PotentialBehaviorOverride")
+    @Override
+    public void onMapReady(@NonNull GoogleMap googleMap) {
+        mMap = googleMap;
+        loadMarkersFromIntent();
 
-    mMap.getUiSettings().setZoomControlsEnabled(true);
-    mMap.getUiSettings().setZoomGesturesEnabled(true);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.getUiSettings().setZoomGesturesEnabled(true);
 
-    // Uniwersytet Zielonogórski - Kampus A
-    LatLng campusA = new LatLng(51.941618, 15.529289);
-    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(campusA, 17));
+        // Uniwersytet Zielonogórski - Kampus A
+        LatLng campusA = new LatLng(51.941618, 15.529289);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(campusA, 17));
 
-    mMap.setOnMapClickListener(latLng -> {
-        addMarkerWithAddress(latLng);
-    });
+        mMap.setOnMapClickListener(latLng -> {
+            addMarkerWithAddress(latLng);
+        });
 
-    mMap.setOnMarkerClickListener(marker -> {
-        long currentTime = System.currentTimeMillis();
+        mMap.setOnMarkerClickListener(marker -> {
+            long currentTime = System.currentTimeMillis();
 
-        if (marker.equals(lastClickedMarker) && (currentTime - lastClickTime < 1500)) {
-            // Double-tap detected — delete marker
-            new AlertDialog.Builder(LocationActivity.this)
-                    .setTitle("Usuń lokalizację")
-                    .setMessage("Czy chcesz usunąć tę lokalizację?")
-                    .setPositiveButton("Tak", (dialog, which) -> {
-                        marker.remove();
+            if (marker.equals(lastClickedMarker) && (currentTime - lastClickTime < 1500)) {
+                // Double-tap detected — delete marker
+                new AlertDialog.Builder(LocationActivity.this)
+                        .setTitle("Usuń lokalizację")
+                        .setMessage("Czy chcesz usunąć tę lokalizację?")
+                        .setPositiveButton("Tak", (dialog, which) -> {
+                            marker.remove();
 
-                        // Remove from selectedLocations
-                        for (int i = 0; i < selectedLocations.size(); i++) {
-                            if (selectedLocations.get(i).getLatLng().equals(marker.getPosition())) {
-                                selectedLocations.remove(i);
-                                break;
+                            // Remove from selectedLocations
+                            for (int i = 0; i < selectedLocations.size(); i++) {
+                                if (selectedLocations.get(i).getLatLng().equals(marker.getPosition())) {
+                                    selectedLocations.remove(i);
+                                    break;
+                                }
                             }
-                        }
 
-                        lastClickedMarker = null; // Reset
-                    })
-                    .setNegativeButton("Anuluj", null)
-                    .show();
-        } else {
-            // First tap — show info window
-            marker.showInfoWindow();
-            lastClickedMarker = marker;
-            lastClickTime = currentTime;
-        }
+                            lastClickedMarker = null; // Reset
+                        })
+                        .setNegativeButton("Anuluj", null)
+                        .show();
+            } else {
+                // First tap — show info window
+                marker.showInfoWindow();
+                lastClickedMarker = marker;
+                lastClickTime = currentTime;
+            }
 
-        return true;
-    });
+            return true;
+        });
     }
 
     private void addMarkerWithAddress(LatLng latLng) {
@@ -401,44 +358,28 @@ public void onMapReady(@NonNull GoogleMap googleMap) {
         if (marker != null) {
             marker.showInfoWindow();
             selectedLocations.add(new SelectedLocation(latLng, marker, title, snippetText));
-//
-//            SelectedLocation loc = new SelectedLocation(latLng, marker, title, snippetText);
-//
-//            // To save GeoJSON feature as a JSON map
-//            Map<String, Object> geoJsonFeature = loc.toGeoJsonFeature();
-//            markerRef.push().setValue(geoJsonFeature);
         }
     }
+    @Override
+    public boolean onOptionsItemSelected(@androidx.annotation.NonNull android.view.MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            // Create a new Intent to hold result data
+            Intent resultIntent = new Intent();
 
-//    @Override
-//    public boolean onOptionsItemSelected(@androidx.annotation.NonNull android.view.MenuItem item) {
-//        if (item.getItemId() == android.R.id.home) {
-//            finish();
-//            return true;
-//        }
-//        return super.onOptionsItemSelected(item);
-//    }
-@Override
-public boolean onOptionsItemSelected(@androidx.annotation.NonNull android.view.MenuItem item) {
-    if (item.getItemId() == android.R.id.home) {
-        // Create a new Intent to hold result data
-        Intent resultIntent = new Intent();
+            if(!selectedLocations.isEmpty()){
 
-        if(!selectedLocations.isEmpty()){
+                String geoJsonString = GeoJsonUtils.toGeoJsonString(selectedLocations);
+                resultIntent.putExtra("geojson",  geoJsonString);
+            }
 
-            String geoJsonString = GeoJsonUtils.toGeoJsonString(selectedLocations);
-            resultIntent.putExtra("geojson",  geoJsonString);
+            // Set the result for the calling activity
+            setResult(RESULT_OK, resultIntent);
+
+            // Finish and return
+            finish();
+            return true;
         }
-
-
-        // Set the result for the calling activity
-        setResult(RESULT_OK, resultIntent);
-
-        // Finish and return
-        finish();
-        return true;
+        return super.onOptionsItemSelected(item);
     }
-    return super.onOptionsItemSelected(item);
-}
 }
 

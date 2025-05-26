@@ -106,7 +106,6 @@ public class AddTodosActivity extends BaseActivity {
             startActivityForResult(newIntent, REQUEST_LOCATION);
         });
 
-        //Intent intent = new Intent(this, AddTodosActivity.class);
         todosRef = databaseRef.child(currentUserId).child("directories").child(directoryId).child("todos");
 
         if(todoExist()){
@@ -115,24 +114,12 @@ public class AddTodosActivity extends BaseActivity {
         setPictureVisibility();
         loadMarkersFromFirebase();
     }
-    //    @Override
-    //    protected void onResume() {
-    //        super.onResume();
-    //        Intent intent = getIntent();
-    //        String selectedLocationsString = intent.getStringExtra("geojson");
-    //        if(selectedLocationsString != null){
-    //            selectedLocations = GeoJsonUtils.fromGeoJsonString(selectedLocationsString);
-    //        }
-    //    }
 
         private void loadMarkersFromFirebase() {
             if(todoId != null) {
                 todosRef.child(todoId).child("locationMarkers").addValueEventListener (new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                        if(selectedLocations != null) {
-//                            selectedLocations.clear();
-//                        }
                         selectedLocations = new ArrayList<>();
                         for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                             try {
