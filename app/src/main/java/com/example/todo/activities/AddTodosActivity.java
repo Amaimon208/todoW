@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -42,6 +44,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -163,6 +166,46 @@ public class AddTodosActivity extends BaseActivity {
                 }
             }
         });
+
+        Button bluetoothSendButton = findViewById(R.id.bluetoothSendButton);
+        ImageView todoImage = findViewById(R.id.todoImage);
+
+        bluetoothSendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Drawable drawable = todoImage.getDrawable();
+                if (drawable == null) {
+                    Toast.makeText(AddTodosActivity.this, "Brak zdjęcia do wysłania", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+
+                try {
+                    File imageFile = new File(getExternalCacheDir(), "send_image.png");
+                    FileOutputStream fos = new FileOutputStream(imageFile);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                    fos.close();
+
+                    Uri imageUri = FileProvider.getUriForFile(
+                            AddTodosActivity.this,
+                            getPackageName() + ".fileprovider",
+                            imageFile);
+
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("image/png");
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+                    shareIntent.setPackage("com.android.bluetooth");
+                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    startActivity(Intent.createChooser(shareIntent, "Wyślij zdjęcie przez Bluetooth"));
+
+                } catch (IOException e) {
+                    Toast.makeText(AddTodosActivity.this, "Błąd przy wysyłaniu zdjęcia", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
 
@@ -189,8 +232,6 @@ public class AddTodosActivity extends BaseActivity {
 
             pfdFile = fileName;
             pfdFilePath = file.getAbsolutePath();
-
-//            saveToFirebase(fileName, file.getAbsolutePath());
 
         } catch (Exception e) {
             Log.e("LocationActivity", "Błąd zapisu PDF: " + e.getMessage());
@@ -467,6 +508,40 @@ public class AddTodosActivity extends BaseActivity {
             todosRef.child(todoId).child("locationMarkers").child("route").setValue("true");
         }
     }
+
+    // Przygotowanie: konwersja Base64 do Bitmapy
+    private Bitmap decodeBase64ToBitmap(String base64String) {
+        byte[] decodedBytes = Base64.decode(base64String, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
+    }
+
+    // Zapis do pliku (np. PNG) i przesłanie przez Bluetooth
+    private File saveBitmapToFile(Bitmap bitmap, String filename) throws IOException {
+        File file = new File(getExternalFilesDir(null), filename);
+        FileOutputStream fos = new FileOutputStream(file);
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        fos.flush();
+        fos.close();
+        return file;
+    }
+
+    // Wysyłanie przez Bluetooth - przykładowy intent
+    private void shareImageViaBluetooth(File file) {
+        Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", file);
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_SEND);
+        intent.setType("image/png");
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
+        intent.setPackage("com.android.bluetooth"); // można też pominąć, by pokazać wszystkie aplikacje
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        try {
+            startActivity(Intent.createChooser(intent, "Wyślij obraz przez Bluetooth"));
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Bluetooth niedostępny", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(@NonNull android.view.MenuItem item) {
