@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -15,12 +16,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.example.todo.BaseActivity;
 import com.example.todo.GeoJsonUtils;
@@ -37,12 +40,19 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 public class AddTodosActivity extends BaseActivity {
+
+
+    private static final int PICK_PDF_REQUEST = 1;
     private SharedPreferences sharedPreferences;
     private static final int DIRECTORY_MANAGEMENT_REQUEST = 1;
     private static final int REQUEST_IMAGE_CAPTURE = 3;
@@ -64,6 +74,10 @@ public class AddTodosActivity extends BaseActivity {
     private List<SelectedLocation> selectedLocations = null;
 
     private boolean drawRoute;
+
+    private String pfdFile;
+
+    private String pfdFilePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +131,70 @@ public class AddTodosActivity extends BaseActivity {
         }
         setPictureVisibility();
         loadMarkersFromFirebase();
+        loadPDFDataFromFirebase(todoId);
+
+        findViewById(R.id.selectPdfButton).setOnClickListener(v -> pickPdf());
+
+        Button openPdfButton = findViewById(R.id.openPdfButton);
+
+        openPdfButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                File file = new File(pfdFilePath);
+                if (!file.exists()) {
+                    Toast.makeText(AddTodosActivity.this, "PDF file not found", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Uri uri = FileProvider.getUriForFile(
+                        AddTodosActivity.this,
+                        getPackageName() + ".fileprovider",
+                        file
+                );
+
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setDataAndType(uri, "application/pdf");
+                intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                try {
+                    startActivity(intent);
+                } catch (ActivityNotFoundException e) {
+                    Toast.makeText(AddTodosActivity.this, "No PDF viewer found", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+
+    private void pickPdf() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/pdf");
+        startActivityForResult(intent, PICK_PDF_REQUEST);
+    }
+
+    private void savePdfToInternalStorage(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            String fileName = "pdf_" + System.currentTimeMillis() + ".pdf";
+            File file = new File(getFilesDir(), fileName);
+            FileOutputStream outputStream = new FileOutputStream(file);
+
+            byte[] buffer = new byte[4096];
+            int length;
+            while ((length = inputStream.read(buffer)) > 0) {
+                outputStream.write(buffer, 0, length);
+            }
+            outputStream.close();
+            inputStream.close();
+
+            pfdFile = fileName;
+            pfdFilePath = file.getAbsolutePath();
+
+//            saveToFirebase(fileName, file.getAbsolutePath());
+
+        } catch (Exception e) {
+            Log.e("LocationActivity", "Błąd zapisu PDF: " + e.getMessage());
+        }
     }
 
         private void loadMarkersFromFirebase() {
@@ -247,7 +325,38 @@ public class AddTodosActivity extends BaseActivity {
                 });
 
         addMarkerToDatabase();
+        if(pfdFile != null && pfdFilePath != null){
+            savePDFToFirebase(pfdFile, pfdFilePath);
+        }
+
         finish();
+    }
+
+    private void savePDFToFirebase(String name, String path) {
+        Map<String, Object> pdfData = new HashMap<>();
+        pdfData.put("name", name);
+        pdfData.put("path", path);
+        pdfData.put("timestamp", System.currentTimeMillis());
+
+        todosRef.child(todoId).child("pdf").setValue(pdfData);
+    }
+
+    private void loadPDFDataFromFirebase(String todoId) {
+        todosRef.child(todoId).child("pdf").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    // Pobieramy "name" i "path" jako String
+                    pfdFile = snapshot.child("name").getValue(String.class);
+                    pfdFilePath = snapshot.child("path").getValue(String.class);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("FirebasePDF", "Failed to read PDF data", error.toException());
+            }
+        });
     }
 
     private String encodeImage(Bitmap bitmap) {
@@ -295,6 +404,11 @@ public class AddTodosActivity extends BaseActivity {
         }
 
         drawRoute = data.getBooleanExtra("drawRoute", false);
+
+        if (requestCode == PICK_PDF_REQUEST && resultCode == RESULT_OK && data != null) {
+            Uri pdfUri = data.getData();
+            savePdfToInternalStorage(pdfUri);
+        }
     }
 
     private void setupCameraButton() {
